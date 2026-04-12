@@ -1,8 +1,10 @@
+import { windowedTurnsToVisionaryMessages } from "@/lib/agents/window";
+import { DEBATE_MAX_WORDS, DEBATE_TARGET_WORDS } from "@/lib/config";
 import { getContextPrompt } from "@/lib/context/umd";
 import { getProvider } from "@/lib/llm";
 import type { ChatMessage } from "@/lib/llm/types";
 import { visionaryDescriptor } from "@/lib/session/decay";
-import type { Session, Turn } from "@/lib/session/types";
+import type { Session } from "@/lib/session/types";
 
 const VISIONARY_PROMPT = `You are the Visionary, one of two AI agents in a real-time brainstorming debate about the topic: "{TOPIC}".
 
@@ -14,39 +16,26 @@ You are in a live conversation with two separate entities:
 
 Rules:
 - You and the Critic are converging on exactly {N} strong ideas. Track the ideas already on the table and refine or replace them as the debate progresses.
-- Keep responses to 100–150 words. You may use short bullet points to list ideas or trade-offs. No headers, no bold, no other markdown. Keep it concise and scannable — like quick remarks in a meeting, not a monologue.
+- Length (hard rule): A single reply must not exceed {MAX_WORDS} words total—count them. Aim for about {TARGET_WORDS} words. If you are near the limit, stop and truncate; do not exceed {MAX_WORDS} words under any circumstances. You may use short bullet points to list ideas or trade-offs. No headers, no bold, no other markdown. Keep it concise and scannable — like quick remarks in a meeting, not a monologue.
 - Make it clear when you are responding to a specific point the other speaker raised, but do NOT address them by the name "Critic" or "Visionary." Keep it natural — use phrases like "that's a fair concern," "I hear the pushback," "to build on what was just said," etc.
 - Never break character. Never mention that you are an AI, a prompt, or a stance value. Never refer to "the debate," "this exercise," or "the system."
 - Do not apologize, do not hedge excessively, do not ask the user questions unprompted. The user will interject on their own when they have something to say.
 - If the user has just interjected, acknowledge their point in your first sentence and let it shape your next idea.`;
 
-function turnsToMessages(turns: Turn[]): ChatMessage[] {
-  const out: ChatMessage[] = [];
-  for (const t of turns) {
-    if (t.agent === "visionary") {
-      out.push({ role: "assistant", content: t.text });
-    } else {
-      out.push({
-        role: "user",
-        content: `[${t.agent.toUpperCase()}]: ${t.text}`,
-      });
-    }
-  }
-  return out;
-}
-
 export function buildVisionaryMessages(session: Session): ChatMessage[] {
   const desc = visionaryDescriptor(session.stance.visionary).text;
   const system = VISIONARY_PROMPT.replace("{TOPIC}", session.topic)
     .replace("{VISIONARY_DESCRIPTOR}", desc)
-    .replace("{N}", String(session.ideaCount));
+    .replace("{N}", String(session.ideaCount))
+    .replace("{TARGET_WORDS}", String(DEBATE_TARGET_WORDS))
+    .replace("{MAX_WORDS}", String(DEBATE_MAX_WORDS));
   const contextPrompt = getContextPrompt(session.contextType);
   const systemWithContext = contextPrompt
     ? system + "\n\n--- UMD CONTEXT ---\n" + contextPrompt
     : system;
   return [
     { role: "system", content: systemWithContext },
-    ...turnsToMessages(session.turns),
+    ...windowedTurnsToVisionaryMessages(session.turns),
   ];
 }
 
