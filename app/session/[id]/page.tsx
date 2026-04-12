@@ -7,8 +7,7 @@ import { EndButton } from "@/components/EndButton";
 import { InterjectBox } from "@/components/InterjectBox";
 import { JudgePanel } from "@/components/JudgePanel";
 import { PendingMessageQueue } from "@/components/PendingMessageQueue";
-import { PageExitNav } from "@/components/PageExitNav";
-import { TerpSparkWordmark } from "@/components/TerpSparkWordmark";
+import { TerpSparkHomeLink } from "@/components/TerpSparkWordmark";
 import { SessionChatTitle } from "@/components/SessionChatTitle";
 import { StanceMeter } from "@/components/StanceMeter";
 import type {
@@ -20,6 +19,7 @@ import type {
 } from "@/lib/session/types";
 import { upsertDashboardSession } from "@/lib/dashboard/storage";
 import { useWordThrottle } from "@/hooks/useWordThrottle";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
@@ -482,12 +482,7 @@ export default function SessionPage() {
   return (
     <div className="bg-neutral-950 flex h-[100dvh] flex-col">
       <header className="flex h-[56px] shrink-0 items-center gap-3 border-b border-neutral-800 px-4">
-        <PageExitNav />
-        {/* Logo mark */}
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-red-700 font-mono text-[9px] font-black text-white">
-          T
-        </span>
-        <TerpSparkWordmark className="font-display shrink-0 text-sm font-black italic uppercase tracking-widest text-neutral-100" />
+        <TerpSparkHomeLink />
         <span className="shrink-0 font-mono text-[9px] text-neutral-700">//</span>
         <SessionChatTitle
           title={state.topic}
@@ -520,6 +515,12 @@ export default function SessionPage() {
           </span>
         </span>
         <div className="ml-auto flex items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex shrink-0 items-center border border-neutral-700 px-2 py-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-neutral-400 transition-colors hover:border-neutral-500 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 sm:px-3"
+          >
+            Dashboard
+          </Link>
           <button
             type="button"
             onClick={() => dispatch({ type: "toggle_judge" })}

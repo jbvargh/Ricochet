@@ -1,7 +1,6 @@
 "use client";
 
-import { PageExitNav } from "@/components/PageExitNav";
-import { TerpSparkWordmark } from "@/components/TerpSparkWordmark";
+import { TerpSparkHomeLink } from "@/components/TerpSparkWordmark";
 import {
   type DashboardSession,
   getDashboardSessions,
@@ -181,11 +180,7 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="flex h-[56px] shrink-0 items-center justify-between border-b border-neutral-800 px-6">
         <div className="flex items-center gap-3">
-          <PageExitNav />
-          <span className="flex h-5 w-5 items-center justify-center bg-red-700 text-[9px] font-black text-white">
-            T
-          </span>
-          <TerpSparkWordmark className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100" />
+          <TerpSparkHomeLink />
           <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-neutral-600">
             // Sessions
           </span>
