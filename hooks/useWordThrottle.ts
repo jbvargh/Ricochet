@@ -100,7 +100,11 @@ export function useWordThrottle(
   // Finish current turn when caught up and `agent_complete` has been received
   useEffect(() => {
     if (isPaused) return;
-    if (!streaming || !streamFinished) return;
+    if (!streamFinished) return;
+    if (!streaming) {
+      onDrainCompleteRef.current();
+      return;
+    }
     const words = streaming.text.split(/\s+/).filter(Boolean);
     if (words.length === 0) {
       onDrainCompleteRef.current();

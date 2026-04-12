@@ -1,8 +1,47 @@
 import type { Session } from "@/lib/session/types";
 import { IDEA_COUNT_MAX, IDEA_COUNT_MIN } from "@/lib/config";
 import { initialStance } from "@/lib/session/decay";
+import {
+  upsertSessionDoc,
+  upsertMessage,
+  getSessionDoc,
+  getSessionDocById,
+  getMessagesBySession,
+  type CosmosSessionDocument,
+  type CosmosMessageDocument,
+} from "@/lib/cosmos/client";
+import type { Turn } from "@/lib/session/types";
 
 const sessions = new Map<string, Session>();
+
+/** Maps sessionId → userId for Cosmos persistence. */
+const sessionOwners = new Map<string, string>();
+
+/** Build a Cosmos session document from an in-memory Session. */
+function toCosmosSessionDoc(session: Session, userId: string): CosmosSessionDocument {
+  return {
+    id: session.id,
+    userId,
+    topic: session.topic,
+    ideaCount: session.ideaCount,
+    contextType: session.contextType,
+    createdAt: session.createdAt,
+    state: session.state,
+    stance: session.stance,
+    exchangesInCycle: session.exchangesInCycle,
+    lastCandidates: session.lastCandidates,
+    turnCount: session.turns.length,
+  };
+}
+
+/** Fire-and-forget session persistence. Logs errors but does not throw. */
+function persistSessionAsync(session: Session): void {
+  const userId = sessionOwners.get(session.id);
+  if (!userId) return;
+  upsertSessionDoc(toCosmosSessionDoc(session, userId)).catch((e) => {
+    console.error("[cosmos] failed to persist session", session.id, e);
+  });
+}
 
 /** Single waiter per session: resolved when user POSTs while orchestrator awaits feedback, or on end. */
 const feedbackWaiters = new Map<string, (text: string) => void>();
@@ -14,6 +53,7 @@ export function createSession(
   topic: string,
   ideaCount: number,
   contextType: string | null,
+  userId?: string,
 ): Session {
   if (
     typeof topic !== "string" ||
@@ -39,6 +79,10 @@ export function createSession(
     lastCandidates: null,
   };
   sessions.set(id, session);
+  if (userId) {
+    sessionOwners.set(id, userId);
+    persistSessionAsync(session);
+  }
   return session;
 }
 
@@ -54,6 +98,7 @@ export function updateSession(
   if (!cur) return undefined;
   const next = mutator(cur);
   sessions.set(id, next);
+  persistSessionAsync(next);
   return next;
 }
 
@@ -74,6 +119,72 @@ export function resolveFeedback(sessionId: string, text: string): void {
 
 export function clearFeedbackWaiter(sessionId: string): void {
   feedbackWaiters.delete(sessionId);
+}
+
+/** Persist a single turn to the Cosmos messages container. Awaited by the orchestrator for durability. */
+export async function persistTurn(sessionId: string, turn: Turn, order: number): Promise<void> {
+  const userId = sessionOwners.get(sessionId);
+  if (!userId) return;
+  const doc: CosmosMessageDocument = {
+    id: turn.id,
+    sessionId,
+    agent: turn.agent,
+    text: turn.text,
+    createdAt: turn.createdAt,
+    stanceAtTurn: turn.stanceAtTurn,
+    order,
+  };
+  await upsertMessage(doc);
+}
+
+/**
+ * Load a session from Cosmos into the in-memory store.
+ * Returns null if the session doesn't exist in Cosmos.
+ * If the session is already in memory, returns it without hitting Cosmos.
+ */
+export async function loadSessionFromCosmos(
+  sessionId: string,
+  userId?: string,
+): Promise<Session | null> {
+  const existing = sessions.get(sessionId);
+  if (existing) return existing;
+
+  let doc: CosmosSessionDocument | null;
+  if (userId) {
+    doc = await getSessionDoc(sessionId, userId);
+  } else {
+    doc = await getSessionDocById(sessionId);
+  }
+  if (!doc) return null;
+
+  // Security: if userId was provided, verify ownership
+  if (userId && doc.userId !== userId) return null;
+
+  const messages = await getMessagesBySession(sessionId);
+
+  const session: Session = {
+    id: doc.id,
+    topic: doc.topic,
+    ideaCount: doc.ideaCount,
+    contextType: doc.contextType,
+    createdAt: doc.createdAt,
+    state: doc.state,
+    stance: doc.stance,
+    turns: messages.map((m) => ({
+      id: m.id,
+      agent: m.agent,
+      text: m.text,
+      createdAt: m.createdAt,
+      stanceAtTurn: m.stanceAtTurn,
+    })),
+    exchangesInCycle: doc.exchangesInCycle,
+    pendingInterjection: null,
+    lastCandidates: doc.lastCandidates,
+  };
+
+  sessions.set(session.id, session);
+  sessionOwners.set(session.id, doc.userId);
+  return session;
 }
 
 /** Blocks until client POSTs /api/session/[id]/ready (after UI finishes typing the turn). */
@@ -118,6 +229,7 @@ export function setSessionAbort(
 
 export function abortSessionOrchestrator(sessionId: string): void {
   sessionAborts.get(sessionId)?.abort();
+  resolveFeedback(sessionId, "");
   resolveDisplayReady(sessionId);
 }
 

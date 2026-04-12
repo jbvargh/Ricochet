@@ -1,5 +1,5 @@
 import { getSessionFromCookies } from "@/lib/auth/session-server";
-import { deleteSession, upsertSession } from "@/lib/cosmos/client";
+import { deleteSession, deleteMessagesBySession, upsertSession } from "@/lib/cosmos/client";
 import type { DashboardSession } from "@/lib/dashboard/storage";
 import { NextResponse } from "next/server";
 
@@ -77,6 +77,7 @@ export async function DELETE(
   const { id } = await context.params;
 
   try {
+    await deleteMessagesBySession(id);
     await deleteSession(user.uid, id);
   } catch (e) {
     console.error("[sessions DELETE]", e);

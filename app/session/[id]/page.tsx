@@ -72,7 +72,25 @@ type Action =
   | { type: "error"; message: string }
   | { type: "toggle_judge" }
   | { type: "close_judge" }
-  | { type: "rename_chat_title"; title: string };
+  | { type: "rename_chat_title"; title: string }
+  | { type: "history"; turns: Turn[] }
+  | { type: "reset" };
+
+const initial: StreamState = {
+  topic: "",
+  ideaCount: 3,
+  contextType: null,
+  stance: { visionary: 1, critic: 0.5 },
+  turns: [],
+  sessionState: "idle",
+  candidates: null,
+  judgeHistory: [],
+  judgePanelOpen: false,
+  streaming: null,
+  error: null,
+  finalCandidates: null,
+  pendingUserMessage: null,
+};
 
 function reducer(state: StreamState, action: Action): StreamState {
   switch (action.type) {
@@ -177,26 +195,14 @@ function reducer(state: StreamState, action: Action): StreamState {
       return { ...state, judgePanelOpen: false };
     case "rename_chat_title":
       return { ...state, topic: action.title };
+    case "history":
+      return { ...state, turns: action.turns };
+    case "reset":
+      return { ...initial };
     default:
       return state;
   }
 }
-
-const initial: StreamState = {
-  topic: "",
-  ideaCount: 3,
-  contextType: null,
-  stance: { visionary: 1, critic: 0.5 },
-  turns: [],
-  sessionState: "idle",
-  candidates: null,
-  judgeHistory: [],
-  judgePanelOpen: false,
-  streaming: null,
-  error: null,
-  finalCandidates: null,
-  pendingUserMessage: null,
-};
 
 export default function SessionPage() {
   const params = useParams();
@@ -315,9 +321,32 @@ export default function SessionPage() {
 
   useEffect(() => {
     if (!id) return;
+    dispatch({ type: "reset" });
     const es = new EventSource(`/api/session/${id}/stream`);
+    let esErrorCount = 0;
+    const resetEsErrorCount = () => {
+      esErrorCount = 0;
+    };
+
+    es.onerror = () => {
+      esErrorCount += 1;
+      if (esErrorCount >= 3) {
+        dispatch({
+          type: "error",
+          message: "Unable to connect to session. Try refreshing.",
+        });
+        es.close();
+      }
+    };
+
+    es.addEventListener("history", (ev) => {
+      resetEsErrorCount();
+      const data = JSON.parse((ev as MessageEvent).data) as { turns: Turn[] };
+      dispatch({ type: "history", turns: data.turns });
+    });
 
     es.addEventListener("session_init", (ev) => {
+      resetEsErrorCount();
       const data = JSON.parse((ev as MessageEvent).data) as {
         topic: string;
         ideaCount: number;
@@ -341,6 +370,7 @@ export default function SessionPage() {
     });
 
     es.addEventListener("agent_token", (ev) => {
+      resetEsErrorCount();
       const data = JSON.parse((ev as MessageEvent).data) as {
         agent: "visionary" | "critic";
         delta: string;
@@ -349,6 +379,7 @@ export default function SessionPage() {
     });
 
     es.addEventListener("agent_complete", (ev) => {
+      resetEsErrorCount();
       const data = JSON.parse((ev as MessageEvent).data) as {
         agent: "visionary" | "critic";
         text: string;
@@ -364,11 +395,13 @@ export default function SessionPage() {
     });
 
     es.addEventListener("user_message", (ev) => {
+      resetEsErrorCount();
       const data = JSON.parse((ev as MessageEvent).data) as { text: string };
       dispatch({ type: "user_message", text: data.text });
     });
 
     es.addEventListener("stance_update", (ev) => {
+      resetEsErrorCount();
       const data = JSON.parse((ev as MessageEvent).data) as {
         stance: Stance;
       };
@@ -376,11 +409,13 @@ export default function SessionPage() {
     });
 
     es.addEventListener("judge_result", (ev) => {
+      resetEsErrorCount();
       const data = JSON.parse((ev as MessageEvent).data) as JudgeResult;
       dispatch({ type: "judge", payload: data });
     });
 
     es.addEventListener("paused", (ev) => {
+      resetEsErrorCount();
       const data = JSON.parse((ev as MessageEvent).data) as {
         candidates: CandidateIdea[];
       };
@@ -388,6 +423,7 @@ export default function SessionPage() {
     });
 
     es.addEventListener("resumed", (ev) => {
+      resetEsErrorCount();
       const data = JSON.parse((ev as MessageEvent).data) as {
         stance: Stance;
       };
@@ -395,6 +431,7 @@ export default function SessionPage() {
     });
 
     es.addEventListener("ended", (ev) => {
+      resetEsErrorCount();
       if (interAgentTimerRef.current) {
         clearTimeout(interAgentTimerRef.current);
         interAgentTimerRef.current = null;
@@ -410,6 +447,7 @@ export default function SessionPage() {
       if (!(ev instanceof MessageEvent) || !ev.data) {
         return;
       }
+      resetEsErrorCount();
       try {
         const data = JSON.parse(ev.data) as { message?: string };
         if (interAgentTimerRef.current) {
