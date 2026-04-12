@@ -6,6 +6,7 @@ import { createOpenAIProvider } from "@/lib/llm/providers/openai";
 import { createTerpAIProvider } from "@/lib/llm/providers/terpai";
 
 let cached: LLMProvider | null | undefined;
+let cachedJudge: LLMProvider | undefined;
 
 const factories: Array<() => LLMProvider | null> = [
   createTerpAIProvider,
@@ -40,4 +41,24 @@ export function getProvider(): LLMProvider {
     throw new Error("no LLM provider configured");
   }
   return p;
+}
+
+const judgeFactories: Array<() => LLMProvider | null> = [createGroqProvider];
+
+/**
+ * Provider for the Judge (structured JSON). Prefers Groq when available to
+ * spare quota on the primary Gemini/Claude provider; falls back to getProvider().
+ */
+export function getJudgeProvider(): LLMProvider {
+  if (cachedJudge !== undefined) return cachedJudge;
+  for (const factory of judgeFactories) {
+    const p = factory();
+    if (p) {
+      console.log(`[ricochet] selected judge provider: ${p.name}`);
+      cachedJudge = p;
+      return p;
+    }
+  }
+  cachedJudge = getProvider();
+  return cachedJudge;
 }

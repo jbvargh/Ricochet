@@ -13,7 +13,7 @@ export const RESET_VISIONARY_STANCE = 0.75;
 export const RESET_CRITIC_STANCE = 0.625;
 
 export const MIN_EXCHANGES_BEFORE_JUDGE = 3;
-export const JUDGE_EVERY_N_EXCHANGES = 1;
+export const JUDGE_EVERY_N_EXCHANGES = 3;
 export const MAX_EXCHANGES_PER_CYCLE = 50;
 
 export const IDEA_COUNT_MIN = 1;
@@ -21,6 +21,11 @@ export const IDEA_COUNT_MAX = 10;
 export const IDEA_COUNT_DEFAULT = 3;
 
 export const JUDGE_TEMPERATURE = 0.2;
+
+/** Target length for Visionary/Critic (prompt; no API token cap). */
+export const DEBATE_TARGET_WORDS = 100;
+/** Maximum words per reply — stated as a strict rule in the prompt only (no API cap). */
+export const DEBATE_MAX_WORDS = 150;
 
 export const VISIONARY_BUCKETS: Array<{
   min: number;

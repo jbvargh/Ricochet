@@ -1,5 +1,5 @@
 import { getContextPrompt } from "@/lib/context/umd";
-import { getProvider } from "@/lib/llm";
+import { getJudgeProvider } from "@/lib/llm";
 import type { ChatMessage } from "@/lib/llm/types";
 import { JUDGE_TEMPERATURE } from "@/lib/config";
 import type {
@@ -87,7 +87,7 @@ export async function runJudge(
   session: Session,
   signal?: AbortSignal,
 ): Promise<JudgeResult> {
-  const provider = getProvider();
+  const provider = getJudgeProvider();
   let messages = buildJudgeMessages(session);
   let raw = await provider.complete(messages, JUDGE_TEMPERATURE, signal);
   let result = parseJudgeResult(raw);

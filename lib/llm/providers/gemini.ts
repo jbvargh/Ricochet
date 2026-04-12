@@ -5,7 +5,10 @@ import {
 } from "@google/generative-ai";
 import type { ChatMessage, LLMProvider } from "@/lib/llm/types";
 
-const MODEL = "gemini-2.0-flash";
+/** Model id from `.env.local` (`GEMINI_MODEL`); defaults to flash. Server-only. */
+function getGeminiModelId(): string {
+  return process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
+}
 
 function toGeminiContents(
   messages: ChatMessage[],
@@ -43,7 +46,7 @@ export function createGeminiProvider(): LLMProvider | null {
       const genAI = new GoogleGenerativeAI(apiKey);
       const { systemInstruction, contents } = toGeminiContents(messages);
       const model = genAI.getGenerativeModel({
-        model: MODEL,
+        model: getGeminiModelId(),
         systemInstruction,
         generationConfig: { temperature },
       });
@@ -60,7 +63,7 @@ export function createGeminiProvider(): LLMProvider | null {
       const genAI = new GoogleGenerativeAI(apiKey);
       const { systemInstruction, contents } = toGeminiContents(messages);
       const model = genAI.getGenerativeModel({
-        model: MODEL,
+        model: getGeminiModelId(),
         systemInstruction,
         generationConfig: { temperature },
       });

@@ -3,6 +3,7 @@ import { runJudge } from "@/lib/agents/judge";
 import { runVisionary } from "@/lib/agents/visionary";
 import {
   MAX_EXCHANGES_PER_CYCLE,
+  JUDGE_EVERY_N_EXCHANGES,
   MIN_EXCHANGES_BEFORE_JUDGE,
 } from "@/lib/config";
 import type { SSEPayload } from "@/lib/sse";
@@ -278,7 +279,13 @@ export async function* runOrchestrator(
         data: { stance: session.stance },
       };
 
-      if (session.exchangesInCycle >= MIN_EXCHANGES_BEFORE_JUDGE) {
+      const judgeOnSchedule =
+        session.exchangesInCycle >= MIN_EXCHANGES_BEFORE_JUDGE &&
+        session.exchangesInCycle % JUDGE_EVERY_N_EXCHANGES === 0;
+      const judgeAtCycleCap =
+        session.exchangesInCycle >= MIN_EXCHANGES_BEFORE_JUDGE &&
+        session.exchangesInCycle >= MAX_EXCHANGES_PER_CYCLE;
+      if (judgeOnSchedule || judgeAtCycleCap) {
         const judgeResult = await runJudge(session, signal);
         yield {
           event: "judge_result",
