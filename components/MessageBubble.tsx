@@ -18,9 +18,15 @@ const avatars: Record<BubbleAgent, string> = {
 };
 
 const avatarStyles: Record<BubbleAgent, string> = {
-  visionary: "bg-amber-500/20 text-amber-500 border-amber-500/40",
-  critic: "bg-slate-500/20 text-slate-400 border-slate-400/40",
+  visionary: "border-yellow-500/50 bg-yellow-500/15 text-yellow-400",
+  critic: "border-red-600/50 bg-red-600/15 text-red-400",
   user: "bg-neutral-700 text-neutral-200 border-neutral-600",
+};
+
+const labelStyles: Record<BubbleAgent, string> = {
+  visionary: "text-yellow-400",
+  critic: "text-red-400",
+  user: "text-neutral-400",
 };
 
 export function MessageBubble({
@@ -41,7 +47,7 @@ export function MessageBubble({
     >
       <div
         className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold",
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded border text-sm font-semibold",
           avatarStyles[agent] ?? "bg-neutral-800 text-neutral-200",
         )}
         aria-hidden
@@ -49,7 +55,12 @@ export function MessageBubble({
         {avatars[agent] ?? "?"}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-neutral-400 mb-1 text-xs font-medium uppercase tracking-wide">
+        <div
+          className={cn(
+            "mb-1 text-xs font-medium uppercase tracking-wide",
+            labelStyles[agent] ?? "text-neutral-400",
+          )}
+        >
           {labels[agent] ?? agent}
         </div>
         <div className="prose prose-invert prose-sm max-w-none text-neutral-100 text-sm leading-relaxed [&_ul]:my-1 [&_ul]:ml-4 [&_ul]:list-disc [&_ul]:space-y-0.5 [&_ol]:my-1 [&_ol]:ml-4 [&_ol]:list-decimal [&_ol]:space-y-0.5 [&_p]:mb-2 [&_p:last-child]:mb-0">

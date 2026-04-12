@@ -65,7 +65,7 @@ export function SessionChatTitle({
             }
           }}
           aria-label="Chat title"
-          className="focus-visible:ring-amber-400 min-w-0 flex-1 rounded border border-neutral-600 bg-neutral-900 px-2 py-1 text-sm text-neutral-100 focus-visible:outline-none focus-visible:ring-2"
+          className="min-w-0 flex-1 rounded-sm border border-neutral-600 bg-neutral-900 px-2 py-1 text-sm text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
         />
       </div>
     );
@@ -87,7 +87,7 @@ export function SessionChatTitle({
           aria-label="Rename chat"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setEditing(true)}
-          className="focus-visible:ring-amber-400 shrink-0 rounded p-1 text-neutral-500 opacity-100 transition-opacity hover:bg-neutral-800 hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 md:opacity-0 md:group-hover:opacity-100"
+          className="shrink-0 rounded-sm p-1 text-neutral-500 opacity-100 transition-opacity hover:bg-neutral-800 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 md:opacity-0 md:group-hover:opacity-100"
         >
           <Pencil className="size-3.5" strokeWidth={2} />
         </button>

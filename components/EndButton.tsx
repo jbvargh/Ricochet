@@ -10,9 +10,9 @@ export function EndButton({ sessionId }: { sessionId: string }) {
     <button
       type="button"
       onClick={() => void onEnd()}
-      className="focus-visible:ring-amber-400 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-300 transition-colors hover:bg-red-500/20 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2"
+      className="border border-neutral-700 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-neutral-400 transition-colors hover:border-red-700 hover:bg-red-950/20 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
     >
-      End session
+      End_session
     </button>
   );
 }

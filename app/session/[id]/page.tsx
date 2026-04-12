@@ -16,8 +16,9 @@ import type {
   Stance,
   Turn,
 } from "@/lib/session/types";
+import { upsertDashboardSession } from "@/lib/dashboard/storage";
 import { useWordThrottle } from "@/hooks/useWordThrottle";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 /** Pause after a turn is committed before signaling the server to continue (matches prior UX). */
@@ -199,6 +200,7 @@ const initial: StreamState = {
 
 export default function SessionPage() {
   const params = useParams();
+  const router = useRouter();
   const id = typeof params.id === "string" ? params.id : "";
   const [state, dispatch] = useReducer(reducer, initial);
   const pendingCompleteRef = useRef<Action | null>(null);
@@ -244,6 +246,30 @@ export default function SessionPage() {
   }, [id]);
 
   const clearComposeSeed = useCallback(() => setComposeSeed(null), []);
+
+  const handleReopen = useCallback(async () => {
+    if (!id) return;
+    const res = await fetch(`/api/session/${id}/reopen`, { method: "POST" });
+    if (res.ok) {
+      router.refresh();
+      window.location.reload();
+    }
+  }, [id, router]);
+
+  // Persist session snapshot to localStorage for the dashboard
+  useEffect(() => {
+    if (!id || state.sessionState === "idle") return;
+    const createdAt =
+      state.turns.length > 0 ? state.turns[0].createdAt : Date.now();
+    upsertDashboardSession({
+      id,
+      topic: state.topic,
+      createdAt,
+      state: state.sessionState as "running" | "awaiting_user" | "ended",
+      lastCandidates: state.finalCandidates ?? null,
+      turnCount: state.turns.length,
+    });
+  }, [id, state.sessionState, state.turns.length, state.topic, state.finalCandidates]);
 
   const commitChatTitle = useCallback(
     (title: string) => {
@@ -415,31 +441,52 @@ export default function SessionPage() {
 
   return (
     <div className="bg-neutral-950 flex h-[100dvh] flex-col">
-      <header className="border-neutral-800 flex h-[60px] shrink-0 items-center gap-4 border-b px-4">
-        <span className="text-neutral-100 shrink-0 text-sm font-semibold">
+      <header className="flex h-[56px] shrink-0 items-center gap-3 border-b border-neutral-800 px-4">
+        {/* Logo mark */}
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-red-700 font-mono text-[9px] font-black text-white">
+          R
+        </span>
+        <span className="font-display shrink-0 text-sm font-black italic uppercase tracking-widest text-neutral-100">
           Ricochet
         </span>
-        <span className="text-neutral-500 shrink-0">·</span>
+        <span className="shrink-0 font-mono text-[9px] text-neutral-700">//</span>
         <SessionChatTitle
           title={state.topic}
           onSave={commitChatTitle}
           disabled={ended || Boolean(state.error)}
         />
         {state.contextType ? (
-          <span className="text-xs bg-neutral-800 text-neutral-300 shrink-0 rounded-full px-3 py-1">
+          <span className="shrink-0 border border-neutral-700 bg-neutral-800 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-neutral-400">
             {CONTEXT_OPTIONS.find((o) => o.value === state.contextType)?.label ??
               state.contextType}
           </span>
         ) : null}
+        {/* Session status indicator */}
+        <span className="ml-1 hidden shrink-0 items-center gap-1.5 md:flex">
+          <span
+            className={`h-1.5 w-1.5 ${
+              ended || state.error
+                ? "bg-neutral-600"
+                : state.sessionState === "running"
+                  ? "bg-emerald-500"
+                  : "bg-yellow-500"
+            }`}
+          />
+          <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-neutral-600">
+            {ended || state.error
+              ? "Ended"
+              : state.sessionState === "running"
+                ? "Live"
+                : "Awaiting"}
+          </span>
+        </span>
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
             onClick={() => dispatch({ type: "toggle_judge" })}
-            className="focus-visible:ring-amber-400 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-300 hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2"
+            className="border border-neutral-700 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-neutral-400 transition-colors hover:border-neutral-500 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
           >
-            {state.judgePanelOpen
-              ? "Hide judge's thoughts"
-              : "Show judge's thoughts"}
+            {state.judgePanelOpen ? "Hide_judge" : "Show_judge"}
           </button>
           <EndButton sessionId={id} />
         </div>
@@ -476,36 +523,49 @@ export default function SessionPage() {
                 />
               </div>
             ) : null}
-            {ended && state.finalCandidates ? (
+            {ended ? (
               <div className="border-neutral-800 border-t px-4 py-4">
-                <div className="border-neutral-800 bg-neutral-900 mx-auto max-w-[720px] rounded-xl border p-4">
-                  <h3 className="text-neutral-100 mb-2 text-sm font-semibold">
-                    Session ended
-                  </h3>
-                  <ul className="flex flex-col gap-2 text-sm text-neutral-300">
-                    {state.finalCandidates.map((c, i) => (
-                      <li key={`${c.title}-${i}`}>
-                        <span className="text-neutral-100 font-medium">
-                          {c.title}
-                        </span>
-                        {" — "}
-                        {c.summary}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="mx-auto max-w-[720px] rounded-sm border border-neutral-800 bg-neutral-900 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-neutral-100">
+                      Session ended
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => void handleReopen()}
+                      className="shrink-0 border border-red-700/60 bg-red-950/40 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.15em] text-red-300 transition-colors hover:bg-red-950/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+                    >
+                      Continue_session
+                    </button>
+                  </div>
+                  {state.finalCandidates && state.finalCandidates.length > 0 ? (
+                    <ul className="flex flex-col gap-2 text-sm text-neutral-300">
+                      {state.finalCandidates.map((c, i) => (
+                        <li key={`${c.title}-${i}`}>
+                          <span className="text-neutral-100 font-medium">
+                            {c.title}
+                          </span>
+                          {" — "}
+                          {c.summary}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-neutral-500 text-sm">No final candidates recorded.</p>
+                  )}
                 </div>
               </div>
             ) : null}
           </div>
           <aside className="border-neutral-800 bg-neutral-950 flex w-full min-h-0 shrink-0 flex-col border-t md:w-[240px] md:border-t-0 md:border-l">
             {state.sessionState === "running" ? (
-              <div className="shrink-0 border-neutral-800 border-b px-2 pt-3 pb-2">
+              <div className="shrink-0 border-b border-neutral-800 px-2 pb-2 pt-3">
                 <button
                   type="button"
                   onClick={togglePause}
-                  className="focus-visible:ring-amber-400 w-full rounded-lg border border-amber-500/45 bg-amber-950/35 py-2.5 text-sm font-semibold text-amber-100 shadow-sm transition-colors hover:bg-amber-950/55 focus-visible:outline-none focus-visible:ring-2"
+                  className="w-full border border-red-700/60 bg-red-950/40 py-2.5 font-mono text-[10px] uppercase tracking-[0.15em] text-red-300 transition-colors hover:bg-red-950/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
                 >
-                  {isPaused ? "Resume session" : "Pause session"}
+                  {isPaused ? "Resume_session" : "Pause_session"}
                 </button>
               </div>
             ) : null}

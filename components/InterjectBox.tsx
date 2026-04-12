@@ -82,20 +82,19 @@ export function InterjectBox({
                   ? "The agents are waiting for your thoughts…"
                   : "Interject or narrow the discussion…"
             }
-            className="focus-visible:ring-amber-400 max-h-32 min-h-10 flex-1 resize-none rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2"
+            className="max-h-32 min-h-10 flex-1 resize-none rounded-sm border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
           />
           <button
             type="button"
             onClick={() => void send()}
             disabled={blocked}
-            className="focus-visible:ring-amber-400 shrink-0 rounded-lg bg-neutral-800 px-4 py-2 text-sm font-medium text-neutral-200 transition-colors hover:bg-neutral-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2"
+            className="shrink-0 border border-neutral-700 bg-neutral-800 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.15em] text-neutral-200 transition-colors hover:bg-neutral-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
           >
             {awaiting ? "Send feedback" : "Send"}
           </button>
         </div>
-        <p className="text-neutral-500 text-[11px] leading-snug">
-          Interject anytime. Tell them to focus on a specific idea, shift
-          direction, or end the session when you&apos;re satisfied.
+        <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-neutral-600">
+          Interject // focus, redirect, or end when satisfied
         </p>
       </div>
     </div>

@@ -27,9 +27,9 @@ function HorizontalMeterRow({
       <p className="text-[10px] leading-snug text-neutral-500">{hint}</p>
       <div className="flex items-center gap-2">
         <span className="w-7 shrink-0 text-[9px] text-neutral-500">Low</span>
-        <div className="bg-neutral-800 flex h-2.5 min-w-0 flex-1 overflow-hidden rounded-full border border-neutral-700">
+        <div className="flex h-2.5 min-w-0 flex-1 overflow-hidden rounded-sm border border-neutral-700 bg-neutral-800">
           <div
-            className={`${fillClass} h-full rounded-full transition-all duration-300 ease-out`}
+            className={`${fillClass} h-full rounded-sm transition-all duration-300 ease-out`}
             style={{ width: `${fillPct * 100}%` }}
           />
         </div>
@@ -50,17 +50,17 @@ export function StanceMeter({ stance }: { stance: Stance }) {
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-2 py-3">
       <HorizontalMeterRow
         label="Visionary"
-        labelClass="text-amber-500"
+        labelClass="text-yellow-400"
         hint="Fuller bar = more ambitious; emptier = more modest."
-        fillClass="bg-amber-500"
+        fillClass="bg-yellow-500"
         fillPct={stance.visionary}
         descriptor={v.text}
       />
       <HorizontalMeterRow
         label="Critic"
-        labelClass="text-slate-400"
+        labelClass="text-red-400"
         hint="Fuller bar = more critical; emptier = gentler."
-        fillClass="bg-slate-400"
+        fillClass="bg-red-600"
         fillPct={stance.critic}
         descriptor={c.text}
       />

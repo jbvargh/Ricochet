@@ -47,7 +47,10 @@ export function TopicForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <label htmlFor="topic" className="text-sm font-medium text-neutral-300">
+        <label
+          htmlFor="topic"
+          className="text-[10px] font-bold uppercase tracking-widest text-neutral-300"
+        >
           Topic
         </label>
         <textarea
@@ -59,17 +62,20 @@ export function TopicForm() {
           placeholder="What should we brainstorm about?"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          className="focus-visible:ring-amber-400 w-full resize-y rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-neutral-100 placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2"
+          className="w-full resize-y rounded-sm border border-neutral-700 bg-neutral-950 px-3 py-2 text-neutral-100 placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
         />
       </div>
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-neutral-300">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-300">
           UMD Context (optional)
         </label>
         <ContextSelect value={contextType} onChange={setContextType} />
       </div>
       <div className="flex flex-col gap-2">
-        <label htmlFor="ideaCount" className="text-sm font-medium text-neutral-300">
+        <label
+          htmlFor="ideaCount"
+          className="text-[10px] font-bold uppercase tracking-widest text-neutral-300"
+        >
           How many ideas should they converge on?
         </label>
         <input
@@ -80,7 +86,7 @@ export function TopicForm() {
           max={IDEA_COUNT_MAX}
           value={ideaCount}
           onChange={(e) => setIdeaCount(Number(e.target.value))}
-          className="focus-visible:ring-amber-400 w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-neutral-100 focus-visible:outline-none focus-visible:ring-2"
+          className="w-full rounded-sm border border-neutral-700 bg-neutral-950 px-3 py-2 text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
         />
       </div>
       {error ? (
@@ -91,12 +97,12 @@ export function TopicForm() {
       <button
         type="submit"
         disabled={loading}
-        className="focus-visible:ring-amber-400 w-full rounded-lg bg-amber-500 py-3 font-semibold text-neutral-950 transition-colors hover:bg-amber-400 disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2"
+        className="w-full rounded-sm bg-red-700 py-3 text-xs font-bold uppercase tracking-widest text-white transition-colors hover:bg-red-600 disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
       >
         {loading ? (
           <span className="inline-flex items-center justify-center gap-2">
             <span
-              className="inline-block size-4 animate-spin rounded-full border-2 border-neutral-950 border-t-transparent"
+              className="inline-block size-4 animate-spin rounded-sm border-2 border-white border-t-transparent"
               aria-hidden
             />
             Starting debate…

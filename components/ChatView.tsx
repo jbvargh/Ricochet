@@ -102,7 +102,7 @@ export function ChatView({
         <button
           type="button"
           onClick={scrollToBottom}
-          className="focus-visible:ring-amber-400 absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-neutral-700 bg-neutral-900 px-4 py-1.5 text-xs text-neutral-200 shadow-lg transition-colors hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2"
+          className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-sm border border-neutral-700 bg-neutral-900 px-4 py-1.5 text-xs text-neutral-200 shadow-lg transition-colors hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
         >
           New messages ↓
         </button>

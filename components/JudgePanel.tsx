@@ -29,7 +29,7 @@ export function JudgePanel({
           <button
             type="button"
             onClick={onClose}
-            className="focus-visible:ring-amber-400 rounded-md px-2 py-1 text-xs text-neutral-400 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2"
+            className="rounded-sm px-2 py-1 text-xs text-neutral-400 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
           >
             Close
           </button>
@@ -39,7 +39,7 @@ export function JudgePanel({
             {[...history].reverse().map((h, idx) => (
               <li
                 key={`${h.at}-${idx}`}
-                className="border-neutral-800 rounded-lg border bg-neutral-900/80 p-3 text-xs"
+                className="rounded-sm border border-neutral-800 bg-neutral-900/80 p-3 text-xs"
               >
                 <div className="text-neutral-500 mb-2 flex flex-wrap items-center gap-2">
                   <time dateTime={new Date(h.at).toISOString()}>
@@ -48,8 +48,8 @@ export function JudgePanel({
                   <span
                     className={
                       h.converged
-                        ? "bg-emerald-500/20 text-emerald-400 rounded px-2 py-0.5"
-                        : "bg-neutral-800 text-neutral-400 rounded px-2 py-0.5"
+                        ? "rounded-sm bg-emerald-500/20 px-2 py-0.5 text-emerald-400"
+                        : "rounded-sm bg-neutral-800 px-2 py-0.5 text-neutral-400"
                     }
                   >
                     converged: {String(h.converged)}
@@ -57,8 +57,8 @@ export function JudgePanel({
                   <span
                     className={
                       h.userSatisfied
-                        ? "bg-emerald-500/20 text-emerald-400 rounded px-2 py-0.5"
-                        : "bg-neutral-800 text-neutral-400 rounded px-2 py-0.5"
+                        ? "rounded-sm bg-emerald-500/20 px-2 py-0.5 text-emerald-400"
+                        : "rounded-sm bg-neutral-800 px-2 py-0.5 text-neutral-400"
                     }
                   >
                     userSatisfied: {String(h.userSatisfied)}
