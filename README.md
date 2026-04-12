@@ -1,6 +1,6 @@
-# Ricochet
+# TerpSpark
 
-**Ricochet** is a web app that turns a rough topic into stronger ideas through a **structured two-agent debate**. You set a topic and how many candidate ideas you want; a **Visionary** pushes for bold directions while a **Critic** stress-tests them. A **Judge** model watches the conversation, decides when the agents have converged on your target number of shared candidates, and can pause for your feedback so the next round refines what already worked.
+**TerpSpark** is a web app that turns a rough topic into stronger ideas through a **structured two-agent debate**. You set a topic and how many candidate ideas you want; a **Visionary** pushes for bold directions while a **Critic** stress-tests them. A **Judge** model watches the conversation, decides when the agents have converged on your target number of shared candidates, and can pause for your feedback so the next round refines what already worked.
 
 The UI streams the dialogue in real time (Server-Sent Events), shows **stance** evolution (how “ambitious” vs “grounded” the Visionary is, and how “constructive” vs “harsh” the Critic is), and lets you **interject** anytime without resetting the cycle.
 
