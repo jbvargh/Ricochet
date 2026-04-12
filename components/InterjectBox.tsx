@@ -1,6 +1,7 @@
 "use client";
 
 import type { SessionState } from "@/lib/session/types";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 export function InterjectBox({
@@ -12,6 +13,8 @@ export function InterjectBox({
   onSuccessfulSend,
   composeSeed,
   onComposeSeedApplied,
+  queueSlot,
+  actionEnd,
 }: {
   sessionId: string;
   sessionState: SessionState;
@@ -22,6 +25,10 @@ export function InterjectBox({
   onSuccessfulSend?: () => void;
   composeSeed: { id: number; text: string } | null;
   onComposeSeedApplied: () => void;
+  /** Renders above the composer (e.g. pending message queue). */
+  queueSlot?: ReactNode;
+  /** Renders to the right of Send (e.g. pause). */
+  actionEnd?: ReactNode;
 }) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -66,9 +73,10 @@ export function InterjectBox({
   }
 
   return (
-    <div className="border-neutral-800 bg-neutral-950/95 sticky bottom-0 z-20 flex h-[72px] shrink-0 items-center border-t px-4 py-2 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-[720px] flex-col gap-1">
-        <div className="flex gap-2">
+    <div className="sticky bottom-0 z-20 shrink-0 border-t border-neutral-800 bg-neutral-950/95 px-4 py-2 backdrop-blur">
+      <div className="mx-auto flex w-full max-w-[720px] flex-col gap-2">
+        {queueSlot}
+        <div className="flex items-end gap-2">
           <textarea
             rows={1}
             value={text}
@@ -82,7 +90,7 @@ export function InterjectBox({
                   ? "The agents are waiting for your thoughts…"
                   : "Interject or narrow the discussion…"
             }
-            className="max-h-32 min-h-10 flex-1 resize-none rounded-sm border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+            className="min-h-10 max-h-32 min-w-0 flex-1 resize-none rounded-sm border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
           />
           <button
             type="button"
@@ -92,6 +100,9 @@ export function InterjectBox({
           >
             {awaiting ? "Send feedback" : "Send"}
           </button>
+          {actionEnd ? (
+            <div className="flex shrink-0 flex-col justify-end">{actionEnd}</div>
+          ) : null}
         </div>
         <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-neutral-600">
           Interject // focus, redirect, or end when satisfied

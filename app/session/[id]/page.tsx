@@ -557,26 +557,8 @@ export default function SessionPage() {
               </div>
             ) : null}
           </div>
-          <aside className="border-neutral-800 bg-neutral-950 flex w-full min-h-0 shrink-0 flex-col border-t md:w-[240px] md:border-t-0 md:border-l">
-            {state.sessionState === "running" ? (
-              <div className="shrink-0 border-b border-neutral-800 px-2 pb-2 pt-3">
-                <button
-                  type="button"
-                  onClick={togglePause}
-                  className="w-full border border-red-700/60 bg-red-950/40 py-2.5 font-mono text-[10px] uppercase tracking-[0.15em] text-red-300 transition-colors hover:bg-red-950/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
-                >
-                  {isPaused ? "Resume_session" : "Pause_session"}
-                </button>
-              </div>
-            ) : null}
+          <aside className="flex w-full min-h-0 shrink-0 flex-col border-t border-neutral-800 bg-neutral-950 md:w-[240px] md:border-l md:border-t-0">
             <StanceMeter stance={state.stance} />
-            {state.pendingUserMessage != null ? (
-              <PendingMessageQueue
-                text={state.pendingUserMessage}
-                onCancel={handleCancelQueued}
-                onEdit={handleEditQueued}
-              />
-            ) : null}
           </aside>
           <JudgePanel
             open={state.judgePanelOpen}
@@ -593,6 +575,26 @@ export default function SessionPage() {
           onSuccessfulSend={handleInterjectSendSuccess}
           composeSeed={composeSeed}
           onComposeSeedApplied={clearComposeSeed}
+          queueSlot={
+            state.pendingUserMessage != null ? (
+              <PendingMessageQueue
+                text={state.pendingUserMessage}
+                onCancel={handleCancelQueued}
+                onEdit={handleEditQueued}
+              />
+            ) : null
+          }
+          actionEnd={
+            state.sessionState === "running" ? (
+              <button
+                type="button"
+                onClick={togglePause}
+                className="whitespace-nowrap border border-red-700/60 bg-red-950/40 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.15em] text-red-300 transition-colors hover:bg-red-950/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+              >
+                {isPaused ? "Resume" : "Pause"}
+              </button>
+            ) : null
+          }
         />
       </div>
     </div>

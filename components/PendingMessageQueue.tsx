@@ -12,7 +12,7 @@ export function PendingMessageQueue({
   onEdit: (text: string) => void | Promise<void>;
 }) {
   return (
-    <div className="border-neutral-800 bg-neutral-900/80 group mt-auto shrink-0 border-t px-2 py-3">
+    <div className="group shrink-0 rounded-sm border border-neutral-800 bg-neutral-900/80 px-3 py-2">
       <div className="flex items-start justify-between gap-1">
         <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-600">
           // Queued
