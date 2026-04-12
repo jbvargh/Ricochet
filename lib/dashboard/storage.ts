@@ -1,5 +1,3 @@
-const STORAGE_KEY = "ricochet-sessions";
-
 export type DashboardSession = {
   id: string;
   topic: string;
@@ -9,41 +7,29 @@ export type DashboardSession = {
   turnCount: number;
 };
 
-export function getDashboardSessions(): DashboardSession[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed as DashboardSession[];
-  } catch {
-    return [];
-  }
+export async function getDashboardSessions(): Promise<DashboardSession[]> {
+  const res = await fetch("/api/sessions", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!res.ok) return [];
+  return res.json() as Promise<DashboardSession[]>;
 }
 
-export function upsertDashboardSession(session: DashboardSession): void {
-  if (typeof window === "undefined") return;
-  try {
-    const existing = getDashboardSessions();
-    const idx = existing.findIndex((s) => s.id === session.id);
-    if (idx >= 0) {
-      existing[idx] = session;
-    } else {
-      existing.unshift(session);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-  } catch {
-    /* ignore storage errors */
-  }
+export async function upsertDashboardSession(
+  session: DashboardSession,
+): Promise<void> {
+  await fetch(`/api/sessions/${encodeURIComponent(session.id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(session),
+  });
 }
 
-export function removeDashboardSession(id: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    const existing = getDashboardSessions().filter((s) => s.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-  } catch {
-    /* ignore storage errors */
-  }
+export async function removeDashboardSession(id: string): Promise<void> {
+  await fetch(`/api/sessions/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
 }

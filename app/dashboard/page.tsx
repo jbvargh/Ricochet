@@ -5,6 +5,8 @@ import {
   getDashboardSessions,
   removeDashboardSession,
 } from "@/lib/dashboard/storage";
+import { getFirebaseAuth } from "@/lib/firebase/client";
+import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -133,27 +135,43 @@ export default function DashboardPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    setSessions(getDashboardSessions());
-    try {
-      const raw = localStorage.getItem("ricochet-user");
-      if (raw) {
-        const parsed = JSON.parse(raw) as { email?: string };
-        setUserEmail(parsed.email ?? null);
+    let cancelled = false;
+    (async () => {
+      const [meRes, list] = await Promise.all([
+        fetch("/api/auth/me", { credentials: "include", cache: "no-store" }),
+        getDashboardSessions(),
+      ]);
+      if (cancelled) return;
+      if (meRes.ok) {
+        const data = (await meRes.json()) as { email?: string };
+        setUserEmail(data.email ?? null);
       }
+      setSessions(list);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleSignOut() {
+    await fetch("/api/auth/session", {
+      method: "DELETE",
+      credentials: "include",
+    });
+    try {
+      await signOut(getFirebaseAuth());
     } catch {
       /* ignore */
     }
-  }, []);
-
-  function handleSignOut() {
-    localStorage.removeItem("ricochet-user");
     router.push("/");
   }
 
   function handleRemove(id: string, e: React.MouseEvent) {
     e.stopPropagation();
-    removeDashboardSession(id);
-    setSessions((prev) => prev.filter((s) => s.id !== id));
+    void (async () => {
+      await removeDashboardSession(id);
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+    })();
   }
 
   return (

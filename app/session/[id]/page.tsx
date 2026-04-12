@@ -256,12 +256,12 @@ export default function SessionPage() {
     }
   }, [id, router]);
 
-  // Persist session snapshot to localStorage for the dashboard
+  // Persist session snapshot to Cosmos (via API) for the dashboard
   useEffect(() => {
     if (!id || state.sessionState === "idle") return;
     const createdAt =
       state.turns.length > 0 ? state.turns[0].createdAt : Date.now();
-    upsertDashboardSession({
+    void upsertDashboardSession({
       id,
       topic: state.topic,
       createdAt,
