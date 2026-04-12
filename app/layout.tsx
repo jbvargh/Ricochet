@@ -15,7 +15,7 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "Ricochet",
+  title: "TerpSpark",
   description: "Two agents debate your idea until they agree",
 };
 

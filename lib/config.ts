@@ -1,4 +1,4 @@
-// All tunable knobs for Ricochet's debate behavior. Edit here, not anywhere else.
+// All tunable knobs for TerpSpark's debate behavior. Edit here, not anywhere else.
 
 export const INITIAL_VISIONARY_STANCE = 1.0;
 export const INITIAL_CRITIC_STANCE = 0.5;

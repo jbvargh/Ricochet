@@ -7,6 +7,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { PageExitNav } from "@/components/PageExitNav";
+import { TerpSparkWordmark } from "@/components/TerpSparkWordmark";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -104,11 +105,9 @@ function LoginPageContent() {
         <div className="flex w-full items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="flex h-6 w-6 items-center justify-center bg-red-700 text-[10px] font-black text-white">
-              R
+              T
             </span>
-            <span className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100">
-              Ricochet
-            </span>
+            <TerpSparkWordmark className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100" />
           </div>
           <PageExitNav className="border-0 pr-0" />
         </div>

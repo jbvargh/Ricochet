@@ -6,7 +6,7 @@
 
 ## 0. What This Feature Does (context, do not implement)
 
-Ricochet is an AI brainstorming tool where two agents (Visionary + Critic) debate a topic. This feature adds an **optional searchable dropdown** to the session creation form that lets the user select a UMD-specific context (e.g., "Hackathon," "QUEST Project," "Pitch"). When selected, a tailored prompt paragraph is appended to the system prompt of all three agents (Visionary, Critic, Judge), giving them grounded knowledge about that UMD program/context.
+TerpSpark is an AI brainstorming tool where two agents (Visionary + Critic) debate a topic. This feature adds an **optional searchable dropdown** to the session creation form that lets the user select a UMD-specific context (e.g., "Hackathon," "QUEST Project," "Pitch"). When selected, a tailored prompt paragraph is appended to the system prompt of all three agents (Visionary, Critic, Judge), giving them grounded knowledge about that UMD program/context.
 
 **Locked decisions:**
 - Context is selected **once at session creation** and cannot be changed mid-session.

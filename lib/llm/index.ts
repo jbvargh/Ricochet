@@ -20,7 +20,7 @@ function selectProvider(): LLMProvider | null {
   for (const factory of factories) {
     const p = factory();
     if (p) {
-      console.log(`[ricochet] selected LLM provider: ${p.name}`);
+      console.log(`[terpspark] selected LLM provider: ${p.name}`);
       return p;
     }
   }
@@ -54,7 +54,7 @@ export function getJudgeProvider(): LLMProvider {
   for (const factory of judgeFactories) {
     const p = factory();
     if (p) {
-      console.log(`[ricochet] selected judge provider: ${p.name}`);
+      console.log(`[terpspark] selected judge provider: ${p.name}`);
       cachedJudge = p;
       return p;
     }

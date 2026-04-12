@@ -1,4 +1,4 @@
-# Ricochet — Implementation Plan
+# TerpSpark — Implementation Plan
 
 > **Reader note (Cursor auto model):** Execute this plan **one phase at a time, in order**. Do not skip ahead. At the end of each phase, verify the "Definition of done" checklist before moving on. Every constant, path, and name in this document is a locked decision — do not substitute, rename, or "improve" them unless a later phase explicitly says to. If something in this plan conflicts with your instincts, trust the plan.
 
@@ -6,7 +6,7 @@
 
 ## 0. Product summary (context, do not implement)
 
-Ricochet is an AI brainstorming tool built around a **two-agent debate**:
+TerpSpark is an AI brainstorming tool built around a **two-agent debate**:
 
 - **Visionary** — pitches bold, ambitious ideas without filtering for feasibility. Starts at peak ambition and decays toward grounded.
 - **Critic** — stress-tests the Visionary's ideas. Starts at a balanced midpoint (neither fully constructive nor fully harsh) and decays toward harsher.
@@ -125,7 +125,7 @@ Required exports from `lib/config.ts`:
 - `VISIONARY_BUCKETS` — array of `{ min: number; max: number; descriptor: string; temperature: number }` matching §1.4
 - `CRITIC_BUCKETS` — same shape, matching §1.4
 
-Add a one-line header comment to the file: `// All tunable knobs for Ricochet's debate behavior. Edit here, not anywhere else.`
+Add a one-line header comment to the file: `// All tunable knobs for TerpSpark's debate behavior. Edit here, not anywhere else.`
 
 ---
 
@@ -134,7 +134,7 @@ Add a one-line header comment to the file: `// All tunable knobs for Ricochet's 
 Create exactly these files. Do not create additional files unless a phase explicitly calls for them.
 
 ```
-ricochet/
+terpspark/
 ├── README.md                              (already exists — leave alone)
 ├── PLAN.md                                (this file)
 ├── package.json
@@ -408,7 +408,7 @@ Every SSE event has the form `event: <type>\ndata: <json>\n\n`. Event types:
 A single centered card on a `bg-neutral-950` full-viewport background. Card is `bg-neutral-900 border border-neutral-800 rounded-2xl p-8 max-w-xl w-full shadow-2xl`.
 
 Contents:
-- Product wordmark "Ricochet" in a large display font, `text-neutral-100`.
+- Product wordmark "TerpSpark" in a large display font, `text-neutral-100`.
 - One-line tagline "Two agents debate your idea until they agree" in `text-neutral-400`.
 - Form (component [TopicForm.tsx](components/TopicForm.tsx)):
   - Label "Topic", large `textarea`, 2 rows, autofocus, placeholder "What should we brainstorm about?", required.
@@ -422,7 +422,7 @@ Full-viewport layout:
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│  Header (60px): "Ricochet" · topic · [judge toggle] · [End button] │
+│  Header (60px): "TerpSpark" · topic · [judge toggle] · [End button] │
 ├────────────────────────────────────────────┬───────────────────────┤
 │                                            │              │
 │   ChatView (scrolling message feed)        │  StanceMeter          │
@@ -479,15 +479,15 @@ Do each phase fully before starting the next. At the end of each phase, run `npm
 - [ ] Initialize shadcn/ui with `npx shadcn-ui@latest init` — choose New York style, neutral base color, CSS variables yes
 - [ ] Create `.env.local.example` listing all five provider env vars with empty values
 - [ ] Set `app/layout.tsx` to apply `className="dark bg-neutral-950 text-neutral-100"` on the `<html>` element and load Inter via `next/font/google`
-- [ ] Replace `app/page.tsx` with a placeholder that just renders "Ricochet" centered — full landing form comes in Phase 6
+- [ ] Replace `app/page.tsx` with a placeholder that just renders "TerpSpark" centered — full landing form comes in Phase 6
 
-**Definition of done:** `npm run dev` starts, browser shows dark-mode "Ricochet" text, no console errors.
+**Definition of done:** `npm run dev` starts, browser shows dark-mode "TerpSpark" text, no console errors.
 
 ### Phase 2 — LLM provider abstraction
 
 - [ ] Create [lib/llm/types.ts](lib/llm/types.ts) with `ChatMessage` (`{ role: "system" | "user" | "assistant", content: string }`) and `LLMProvider` interface (`name: string; stream(messages, temperature): AsyncIterable<string>; complete(messages, temperature): Promise<string>`).
 - [ ] Implement each of the 5 providers under [lib/llm/providers/](lib/llm/providers/). Each exports a factory that returns `LLMProvider | null` (returns null if its env var is missing). TerpAI uses the OpenAI SDK pointed at `TERPAI_BASE_URL`.
-- [ ] Implement [lib/llm/index.ts](lib/llm/index.ts): on first call, try each provider factory in the §1.2 order, return the first non-null, memoize the result. Log `"[ricochet] selected LLM provider: <name>"` to stdout on selection. Expose `getProvider(): LLMProvider`.
+- [ ] Implement [lib/llm/index.ts](lib/llm/index.ts): on first call, try each provider factory in the §1.2 order, return the first non-null, memoize the result. Log `"[terpspark] selected LLM provider: <name>"` to stdout on selection. Expose `getProvider(): LLMProvider`.
 - [ ] Provider `stream` must yield string deltas (just the new text chunk) as they arrive. `complete` returns the full concatenated response.
 
 **Definition of done:** Write a scratch script (delete after) that calls `getProvider().complete([{role:"user", content:"say hi"}], 0.5)` and prints the result. Confirm it works end-to-end with whichever key you have.

@@ -42,7 +42,7 @@ export function MessageBubble({
     <div
       className={cn(
         "flex max-w-[720px] gap-3",
-        animate && "ricochet-bubble-in",
+        animate && "terpspark-bubble-in",
       )}
     >
       <div

@@ -1,6 +1,7 @@
 "use client";
 
 import { PageExitNav } from "@/components/PageExitNav";
+import { TerpSparkWordmark } from "@/components/TerpSparkWordmark";
 import {
   type DashboardSession,
   getDashboardSessions,
@@ -182,11 +183,9 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
           <PageExitNav />
           <span className="flex h-5 w-5 items-center justify-center bg-red-700 text-[9px] font-black text-white">
-            R
+            T
           </span>
-          <span className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100">
-            Ricochet
-          </span>
+          <TerpSparkWordmark className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100" />
           <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-neutral-600">
             // Sessions
           </span>

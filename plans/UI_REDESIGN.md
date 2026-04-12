@@ -2,7 +2,7 @@
 
 ## Goal
 
-Restyle every page and component in the Ricochet app to match the visual language shown in the reference screenshots. **Do not change any logic, routing, or data flow.** This is a pure visual/styling task.
+Restyle every page and component in the TerpSpark app to match the visual language shown in the reference screenshots. **Do not change any logic, routing, or data flow.** This is a pure visual/styling task.
 
 The three reference images share a consistent design language:
 - Near-black dark backgrounds with very thin borders
@@ -131,7 +131,7 @@ Apply across **every file listed below** unless the file-specific section says o
 
 Complete visual restyle. Apply the following changes:
 
-1. **Brand wordmark** ("Ricochet" `<h1>`):
+1. **Brand wordmark** ("TerpSpark" `<h1>`):
    - Add `font-display` class (Barlow Condensed)
    - Change to uppercase: `tracking-widest uppercase`
    - Remove `text-6xl font-bold` → use `text-7xl font-black` (Barlow Condensed Black)
@@ -160,7 +160,7 @@ Complete visual restyle. Apply the following changes:
 
 1. **Page layout**: The current centered card on a dark bg is fine. Change the card from `rounded-2xl` → `rounded` (or `rounded-sm`).
 
-2. **"Ricochet" brand link at top**:
+2. **"TerpSpark" brand link at top**:
    - Add `font-display uppercase tracking-widest`
    - Change `hover:text-amber-400` → `hover:text-red-500`
    - Size: keep `text-3xl font-bold` or increase to `text-4xl font-black`
@@ -191,7 +191,7 @@ Complete visual restyle. Apply the following changes:
 
 #### Header
 
-1. **"Ricochet" brand** (`<span>`): Add `font-display uppercase tracking-widest text-base`.
+1. **"TerpSpark" brand** (`<span>`): Add `font-display uppercase tracking-widest text-base`.
 2. **Sign out button**: Change `rounded-lg` → `rounded-sm`, change `focus-visible:ring-amber-400` → `focus-visible:ring-red-600`.
 
 #### Page heading area
@@ -351,7 +351,7 @@ This wraps `TopicForm`. No major layout changes needed — the inner form is res
 
 #### Header
 
-1. **"Ricochet" brand span**:
+1. **"TerpSpark" brand span**:
    - Add `font-display uppercase tracking-widest`
    - Keep `text-neutral-100 text-sm font-semibold`
 
@@ -390,7 +390,7 @@ Change from amber styling to red:
 - All logic, hooks, reducers, API calls, routing, SSE handling — untouched.
 - Visionary amber coloring in `StanceMeter.tsx` and `MessageBubble.tsx` — amber stays for the Visionary agent identity.
 - The `prose prose-invert` markdown rendering in `MessageBubble` — untouched.
-- The animation (`ricochet-bubble-in`) — untouched.
+- The animation (`terpspark-bubble-in`) — untouched.
 - `ContextSelect.tsx` — not listed above, skip (minor internal component, leave as-is).
 - All `lib/` and `hooks/` files — untouched.
 - `tailwind.config.*` — not needed since fonts are loaded via CSS variables.
@@ -399,4 +399,4 @@ Change from amber styling to red:
 
 ## Verification
 
-After implementation, run `npx next build` in the `Ricochet/` directory to confirm no TypeScript errors were introduced. Since this is a class-name-only change, no type errors are expected.
+After implementation, run `npx next build` in the project directory to confirm no TypeScript errors were introduced. Since this is a class-name-only change, no type errors are expected.
