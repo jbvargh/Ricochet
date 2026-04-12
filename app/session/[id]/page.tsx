@@ -7,6 +7,7 @@ import { EndButton } from "@/components/EndButton";
 import { InterjectBox } from "@/components/InterjectBox";
 import { JudgePanel } from "@/components/JudgePanel";
 import { PendingMessageQueue } from "@/components/PendingMessageQueue";
+import { PageExitNav } from "@/components/PageExitNav";
 import { SessionChatTitle } from "@/components/SessionChatTitle";
 import { StanceMeter } from "@/components/StanceMeter";
 import type {
@@ -480,6 +481,7 @@ export default function SessionPage() {
   return (
     <div className="bg-neutral-950 flex h-[100dvh] flex-col">
       <header className="flex h-[56px] shrink-0 items-center gap-3 border-b border-neutral-800 px-4">
+        <PageExitNav />
         {/* Logo mark */}
         <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-red-700 font-mono text-[9px] font-black text-white">
           R

@@ -3,6 +3,11 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  if (path === "/dashboard/new" || path.startsWith("/session/")) {
+    return NextResponse.next();
+  }
+
   const raw = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const user = raw ? await verifySessionToken(raw) : null;
 

@@ -29,7 +29,10 @@ export default function RootLayout({
       lang="en"
       className={`dark ${inter.variable} ${barlowCondensed.variable} h-full bg-neutral-950 text-neutral-100 antialiased`}
     >
-      <body className={`min-h-full font-sans ${inter.className}`}>
+      <body
+        className={`min-h-full font-sans ${inter.className}`}
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

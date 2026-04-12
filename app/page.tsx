@@ -8,12 +8,20 @@ export default function Home() {
         <span className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100">
           Ricochet
         </span>
-        <Link
-          href="/login"
-          className="text-xs font-bold uppercase tracking-widest text-neutral-400 transition-colors hover:text-red-500"
-        >
-          Sign in →
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/login?mode=signup"
+            className="text-xs font-bold uppercase tracking-widest text-neutral-400 transition-colors hover:text-red-500"
+          >
+            Sign up
+          </Link>
+          <Link
+            href="/login"
+            className="text-xs font-bold uppercase tracking-widest text-neutral-400 transition-colors hover:text-red-500"
+          >
+            Sign in →
+          </Link>
+        </div>
       </header>
 
       {/* Hero */}
@@ -47,7 +55,7 @@ export default function Home() {
           {/* CTAs */}
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link
-              href="/login"
+              href="/dashboard/new"
               className="border border-red-700 bg-red-700 px-8 py-3 text-xs font-bold uppercase tracking-widest text-white transition-colors hover:bg-red-600"
             >
               Get started
@@ -57,6 +65,12 @@ export default function Home() {
               className="border border-dashed border-neutral-600 px-8 py-3 text-xs font-bold uppercase tracking-widest text-neutral-400 transition-colors hover:border-red-700 hover:text-red-500"
             >
               Sign in
+            </Link>
+            <Link
+              href="/login?mode=signup"
+              className="border border-dashed border-neutral-600 px-8 py-3 text-xs font-bold uppercase tracking-widest text-neutral-400 transition-colors hover:border-red-700 hover:text-red-500"
+            >
+              Sign up
             </Link>
           </div>
         </div>

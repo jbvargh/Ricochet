@@ -1,3 +1,4 @@
+import { PageExitNav } from "@/components/PageExitNav";
 import { TopicForm } from "@/components/TopicForm";
 import Link from "next/link";
 
@@ -5,11 +6,12 @@ export default function NewIdeaPage() {
   return (
     <div className="flex min-h-screen flex-col bg-neutral-950">
       <header className="flex h-[56px] shrink-0 items-center gap-3 border-b border-neutral-800 px-6">
+        <PageExitNav />
         <span className="flex h-5 w-5 items-center justify-center bg-red-700 text-[9px] font-black text-white">
           R
         </span>
         <Link
-          href="/dashboard"
+          href="/"
           className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100 transition-colors hover:text-red-500"
         >
           Ricochet

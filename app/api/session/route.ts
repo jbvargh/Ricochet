@@ -16,9 +16,6 @@ export async function POST(request: Request) {
   }
 
   const user = await getSessionFromCookies();
-  if (!user) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
 
   let body: unknown;
   try {
@@ -72,7 +69,12 @@ export async function POST(request: Request) {
       : null;
 
   try {
-    const session = createSession(topic, ideaCount, contextType, user.uid);
+    const session = createSession(
+      topic,
+      ideaCount,
+      contextType,
+      user?.uid,
+    );
     return NextResponse.json({ sessionId: session.id });
   } catch {
     return NextResponse.json({ error: "invalid session parameters" }, { status: 400 });

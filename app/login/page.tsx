@@ -6,9 +6,10 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
+import { PageExitNav } from "@/components/PageExitNav";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 function safeNextParam(next: string | null): string {
   if (!next || !next.startsWith("/") || next.startsWith("//")) {
@@ -39,7 +40,16 @@ function firebaseAuthMessage(code: string): string {
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(() =>
+    searchParams.get("mode") === "signup" ? "signup" : "signin",
+  );
+  const syncedModeParam = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const m = searchParams.get("mode") ?? "";
+    if (m === syncedModeParam.current) return;
+    syncedModeParam.current = m;
+    if (m === "signup") setMode("signup");
+  }, [searchParams]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -91,13 +101,16 @@ function LoginPageContent() {
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* ── Left panel ── */}
       <div className="relative flex flex-col justify-between bg-neutral-900 px-10 py-10 md:w-[45%]">
-        <div className="flex items-center gap-3">
-          <span className="flex h-6 w-6 items-center justify-center bg-red-700 text-[10px] font-black text-white">
-            R
-          </span>
-          <span className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100">
-            Ricochet
-          </span>
+        <div className="flex w-full items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-6 w-6 items-center justify-center bg-red-700 text-[10px] font-black text-white">
+              R
+            </span>
+            <span className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100">
+              Ricochet
+            </span>
+          </div>
+          <PageExitNav className="border-0 pr-0" />
         </div>
 
         <div className="py-16">
@@ -240,7 +253,7 @@ function LoginPageContent() {
               href="/"
               className="font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-600 transition-colors hover:text-neutral-400"
             >
-              ← Back
+              ← Home
             </Link>
             <div className="h-px flex-1 bg-neutral-800" />
           </div>
