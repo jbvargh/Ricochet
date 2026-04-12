@@ -4,6 +4,8 @@ import type { Turn } from "@/lib/session/types";
 import { MessageBubble } from "@/components/MessageBubble";
 import { useEffect, useRef, useState } from "react";
 
+const NEAR_BOTTOM_PX = 200;
+
 export function ChatView({
   turns,
   streaming,
@@ -13,20 +15,45 @@ export function ChatView({
 }) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const streamingRef = useRef(streaming);
+  streamingRef.current = streaming;
+  const syncScrollAffordanceRef = useRef<() => void>(() => {});
   const [showNew, setShowNew] = useState(false);
 
-  useEffect(() => {
+  syncScrollAffordanceRef.current = () => {
     const el = scrollRef.current;
     if (!el) return;
     const nearBottom =
-      el.scrollHeight - el.scrollTop - el.clientHeight < 200;
+      el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
     if (nearBottom) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          bottomRef.current?.scrollIntoView({
+            behavior:
+              streamingRef.current != null ? "auto" : "smooth",
+          });
+        });
+      });
       setTimeout(() => setShowNew(false), 0);
     } else {
       setTimeout(() => setShowNew(true), 0);
     }
+  };
+
+  useEffect(() => {
+    syncScrollAffordanceRef.current();
   }, [turns.length, streaming?.text]);
+
+  useEffect(() => {
+    const col = contentRef.current;
+    if (!col) return;
+    const ro = new ResizeObserver(() => {
+      syncScrollAffordanceRef.current();
+    });
+    ro.observe(col);
+    return () => ro.disconnect();
+  }, []);
 
   function scrollToBottom() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,11 +69,14 @@ export function ChatView({
           const el = scrollRef.current;
           if (!el) return;
           const nearBottom =
-            el.scrollHeight - el.scrollTop - el.clientHeight < 200;
+            el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
           if (nearBottom) setShowNew(false);
         }}
       >
-        <div className="mx-auto flex max-w-[720px] flex-col gap-6">
+        <div
+          ref={contentRef}
+          className="mx-auto flex max-w-[720px] flex-col gap-6"
+        >
           {turns.map((t) =>
             t.agent === "visionary" ||
             t.agent === "critic" ||

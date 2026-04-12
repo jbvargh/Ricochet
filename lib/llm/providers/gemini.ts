@@ -23,6 +23,13 @@ function toGeminiContents(
       parts: [{ text: m.content } satisfies Part],
     });
   }
+  // Gemini requires at least one content turn; first agent turn is often system-only.
+  if (contents.length === 0) {
+    contents.push({
+      role: "user",
+      parts: [{ text: "Begin." } satisfies Part],
+    });
+  }
   return { systemInstruction: systemParts.join("\n\n"), contents };
 }
 

@@ -29,6 +29,7 @@ export function useWordThrottle(
   throttledStreaming: ThrottledOutput;
   isPaused: boolean;
   togglePause: () => void;
+  setPaused: (paused: boolean) => void;
 } {
   const [displayedWordCount, setDisplayedWordCount] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -133,6 +134,9 @@ export function useWordThrottle(
   }, [sessionState]);
 
   const togglePause = useCallback(() => setIsPaused((p) => !p), []);
+  const setPaused = useCallback((paused: boolean) => {
+    setIsPaused(paused);
+  }, []);
 
   let throttledStreaming: ThrottledOutput = null;
 
@@ -156,5 +160,5 @@ export function useWordThrottle(
     }
   }
 
-  return { throttledStreaming, isPaused, togglePause };
+  return { throttledStreaming, isPaused, togglePause, setPaused };
 }

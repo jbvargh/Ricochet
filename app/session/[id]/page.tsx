@@ -6,6 +6,8 @@ import { CandidatePanel } from "@/components/CandidatePanel";
 import { EndButton } from "@/components/EndButton";
 import { InterjectBox } from "@/components/InterjectBox";
 import { JudgePanel } from "@/components/JudgePanel";
+import { PendingMessageQueue } from "@/components/PendingMessageQueue";
+import { SessionChatTitle } from "@/components/SessionChatTitle";
 import { StanceMeter } from "@/components/StanceMeter";
 import type {
   CandidateIdea,
@@ -16,12 +18,17 @@ import type {
 } from "@/lib/session/types";
 import { useWordThrottle } from "@/hooks/useWordThrottle";
 import { useParams } from "next/navigation";
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 /** Pause after a turn is committed before signaling the server to continue (matches prior UX). */
 const INTER_AGENT_DELAY_MS = 1500;
 
+function chatTitleStorageKey(sessionId: string) {
+  return `ricochet-chat-title-${sessionId}`;
+}
+
 type StreamState = {
+  /** Header chat title (client-only; rename persists in sessionStorage; server debate topic unchanged). */
   topic: string;
   ideaCount: number;
   contextType: string | null;
@@ -34,6 +41,8 @@ type StreamState = {
   streaming: { agent: "visionary" | "critic"; text: string } | null;
   error: string | null;
   finalCandidates: CandidateIdea[] | null;
+  /** Client-only: message sent to server, shown until user_message SSE confirms it in the transcript. */
+  pendingUserMessage: string | null;
 };
 
 type Action =
@@ -52,6 +61,8 @@ type Action =
       stance: Stance;
     }
   | { type: "user_message"; text: string }
+  | { type: "queue_user_message"; text: string }
+  | { type: "clear_pending_user_message" }
   | { type: "stance"; stance: Stance }
   | { type: "judge"; payload: JudgeResult }
   | { type: "paused"; candidates: CandidateIdea[] }
@@ -59,7 +70,8 @@ type Action =
   | { type: "ended"; finalCandidates: CandidateIdea[] }
   | { type: "error"; message: string }
   | { type: "toggle_judge" }
-  | { type: "close_judge" };
+  | { type: "close_judge" }
+  | { type: "rename_chat_title"; title: string };
 
 function reducer(state: StreamState, action: Action): StreamState {
   switch (action.type) {
@@ -109,8 +121,16 @@ function reducer(state: StreamState, action: Action): StreamState {
         text: action.text,
         createdAt: Date.now(),
       };
-      return { ...state, turns: [...state.turns, turn] };
+      return {
+        ...state,
+        turns: [...state.turns, turn],
+        pendingUserMessage: null,
+      };
     }
+    case "queue_user_message":
+      return { ...state, pendingUserMessage: action.text };
+    case "clear_pending_user_message":
+      return { ...state, pendingUserMessage: null };
     case "stance":
       return { ...state, stance: action.stance };
     case "judge":
@@ -140,6 +160,7 @@ function reducer(state: StreamState, action: Action): StreamState {
         sessionState: "ended",
         finalCandidates: action.finalCandidates,
         streaming: null,
+        pendingUserMessage: null,
       };
     case "error":
       return {
@@ -147,11 +168,14 @@ function reducer(state: StreamState, action: Action): StreamState {
         error: action.message,
         sessionState: "ended",
         streaming: null,
+        pendingUserMessage: null,
       };
     case "toggle_judge":
       return { ...state, judgePanelOpen: !state.judgePanelOpen };
     case "close_judge":
       return { ...state, judgePanelOpen: false };
+    case "rename_chat_title":
+      return { ...state, topic: action.title };
     default:
       return state;
   }
@@ -170,6 +194,7 @@ const initial: StreamState = {
   streaming: null,
   error: null,
   finalCandidates: null,
+  pendingUserMessage: null,
 };
 
 export default function SessionPage() {
@@ -179,8 +204,14 @@ export default function SessionPage() {
   const pendingCompleteRef = useRef<Action | null>(null);
   const [streamFinished, setStreamFinished] = useState(false);
   const interAgentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [composeSeed, setComposeSeed] = useState<{
+    id: number;
+    text: string;
+  } | null>(null);
+  /** After editing a queued message, resume playback once the revised message is sent. */
+  const resumeAfterQueuedEditSendRef = useRef(false);
 
-  const { throttledStreaming, isPaused, togglePause } = useWordThrottle(
+  const { throttledStreaming, isPaused, togglePause, setPaused } = useWordThrottle(
     state.streaming,
     state.sessionState,
     streamFinished,
@@ -202,6 +233,60 @@ export default function SessionPage() {
     },
   );
 
+  const cancelPendingOnServer = useCallback(async (): Promise<boolean> => {
+    if (!id) return false;
+    const res = await fetch(`/api/session/${id}/message`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cancelPending: true }),
+    });
+    return res.ok;
+  }, [id]);
+
+  const clearComposeSeed = useCallback(() => setComposeSeed(null), []);
+
+  const commitChatTitle = useCallback(
+    (title: string) => {
+      const t = title.trim();
+      if (!t) return;
+      if (id && typeof window !== "undefined") {
+        sessionStorage.setItem(chatTitleStorageKey(id), t);
+      }
+      dispatch({ type: "rename_chat_title", title: t });
+    },
+    [id],
+  );
+
+  const handleCancelQueued = useCallback(async () => {
+    const ok = await cancelPendingOnServer();
+    if (ok) dispatch({ type: "clear_pending_user_message" });
+  }, [cancelPendingOnServer]);
+
+  const handleEditQueued = useCallback(
+    async (text: string) => {
+      setPaused(true);
+      const ok = await cancelPendingOnServer();
+      if (ok) {
+        resumeAfterQueuedEditSendRef.current = true;
+        dispatch({ type: "clear_pending_user_message" });
+        setComposeSeed({ id: Date.now(), text });
+      }
+    },
+    [cancelPendingOnServer, setPaused],
+  );
+
+  const handleInterjectSendSuccess = useCallback(() => {
+    if (!resumeAfterQueuedEditSendRef.current) return;
+    resumeAfterQueuedEditSendRef.current = false;
+    setPaused(false);
+  }, [setPaused]);
+
+  useEffect(() => {
+    if (state.sessionState === "ended" || state.error) {
+      resumeAfterQueuedEditSendRef.current = false;
+    }
+  }, [state.sessionState, state.error]);
+
   useEffect(() => {
     if (!id) return;
     const es = new EventSource(`/api/session/${id}/stream`);
@@ -213,9 +298,16 @@ export default function SessionPage() {
         contextType?: string | null;
         stance: Stance;
       };
+      let headerTitle = data.topic;
+      if (typeof window !== "undefined" && id) {
+        const stored = sessionStorage.getItem(chatTitleStorageKey(id));
+        if (stored !== null && stored.trim() !== "") {
+          headerTitle = stored.trim();
+        }
+      }
       dispatch({
         type: "init",
-        topic: data.topic,
+        topic: headerTitle,
         ideaCount: data.ideaCount,
         contextType: data.contextType ?? null,
         stance: data.stance,
@@ -324,11 +416,15 @@ export default function SessionPage() {
   return (
     <div className="bg-neutral-950 flex h-[100dvh] flex-col">
       <header className="border-neutral-800 flex h-[60px] shrink-0 items-center gap-4 border-b px-4">
-        <span className="text-neutral-100 text-sm font-semibold">Ricochet</span>
-        <span className="text-neutral-500">·</span>
-        <span className="text-neutral-300 max-w-[min(40vw,320px)] truncate text-sm">
-          {state.topic || "…"}
+        <span className="text-neutral-100 shrink-0 text-sm font-semibold">
+          Ricochet
         </span>
+        <span className="text-neutral-500 shrink-0">·</span>
+        <SessionChatTitle
+          title={state.topic}
+          onSave={commitChatTitle}
+          disabled={ended || Boolean(state.error)}
+        />
         {state.contextType ? (
           <span className="text-xs bg-neutral-800 text-neutral-300 shrink-0 rounded-full px-3 py-1">
             {CONTEXT_OPTIONS.find((o) => o.value === state.contextType)?.label ??
@@ -336,15 +432,6 @@ export default function SessionPage() {
           </span>
         ) : null}
         <div className="ml-auto flex items-center gap-2">
-          {state.sessionState === "running" ? (
-            <button
-              type="button"
-              onClick={togglePause}
-              className="focus-visible:ring-amber-400 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-300 hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2"
-            >
-              {isPaused ? "Resume" : "Pause"}
-            </button>
-          ) : null}
           <button
             type="button"
             onClick={() => dispatch({ type: "toggle_judge" })}
@@ -410,8 +497,26 @@ export default function SessionPage() {
               </div>
             ) : null}
           </div>
-          <aside className="border-neutral-800 bg-neutral-950 w-full shrink-0 border-t md:w-[240px] md:border-t-0 md:border-l">
+          <aside className="border-neutral-800 bg-neutral-950 flex w-full min-h-0 shrink-0 flex-col border-t md:w-[240px] md:border-t-0 md:border-l">
+            {state.sessionState === "running" ? (
+              <div className="shrink-0 border-neutral-800 border-b px-2 pt-3 pb-2">
+                <button
+                  type="button"
+                  onClick={togglePause}
+                  className="focus-visible:ring-amber-400 w-full rounded-lg border border-amber-500/45 bg-amber-950/35 py-2.5 text-sm font-semibold text-amber-100 shadow-sm transition-colors hover:bg-amber-950/55 focus-visible:outline-none focus-visible:ring-2"
+                >
+                  {isPaused ? "Resume session" : "Pause session"}
+                </button>
+              </div>
+            ) : null}
             <StanceMeter stance={state.stance} />
+            {state.pendingUserMessage != null ? (
+              <PendingMessageQueue
+                text={state.pendingUserMessage}
+                onCancel={handleCancelQueued}
+                onEdit={handleEditQueued}
+              />
+            ) : null}
           </aside>
           <JudgePanel
             open={state.judgePanelOpen}
@@ -423,6 +528,11 @@ export default function SessionPage() {
           sessionId={id}
           sessionState={state.sessionState}
           disabled={ended || Boolean(state.error)}
+          inputLocked={state.pendingUserMessage != null}
+          onQueued={(text) => dispatch({ type: "queue_user_message", text })}
+          onSuccessfulSend={handleInterjectSendSuccess}
+          composeSeed={composeSeed}
+          onComposeSeedApplied={clearComposeSeed}
         />
       </div>
     </div>

@@ -17,11 +17,20 @@ export async function POST(
     return new Response(null, { status: 404 });
   }
 
-  let body: { text?: unknown; isFeedback?: unknown };
+  let body: { text?: unknown; isFeedback?: unknown; cancelPending?: unknown };
   try {
-    body = (await request.json()) as { text?: unknown; isFeedback?: unknown };
+    body = (await request.json()) as {
+      text?: unknown;
+      isFeedback?: unknown;
+      cancelPending?: unknown;
+    };
   } catch {
     return NextResponse.json({ error: "invalid JSON" }, { status: 400 });
+  }
+
+  if (body.cancelPending === true) {
+    updateSession(id, (s) => ({ ...s, pendingInterjection: null }));
+    return new Response(null, { status: 204 });
   }
 
   const text = typeof body.text === "string" ? body.text : "";

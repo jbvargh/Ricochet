@@ -1,28 +1,46 @@
 "use client";
 
 import type { SessionState } from "@/lib/session/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function InterjectBox({
   sessionId,
   sessionState,
   disabled,
+  inputLocked,
+  onQueued,
+  onSuccessfulSend,
+  composeSeed,
+  onComposeSeedApplied,
 }: {
   sessionId: string;
   sessionState: SessionState;
   disabled: boolean;
+  inputLocked: boolean;
+  onQueued: (text: string) => void;
+  /** Called after a message is accepted by the server (e.g. auto-resume after queue edit). */
+  onSuccessfulSend?: () => void;
+  composeSeed: { id: number; text: string } | null;
+  onComposeSeedApplied: () => void;
 }) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
 
   const awaiting = sessionState === "awaiting_user";
+  const blocked = disabled || sending || inputLocked;
+
+  useEffect(() => {
+    if (!composeSeed) return;
+    setText(composeSeed.text);
+    onComposeSeedApplied();
+  }, [composeSeed, onComposeSeedApplied]);
 
   async function send() {
     const trimmed = text.trim();
-    if (!trimmed || sending || disabled) return;
+    if (!trimmed || sending || disabled || inputLocked) return;
     setSending(true);
     try {
-      await fetch(`/api/session/${sessionId}/message`, {
+      const res = await fetch(`/api/session/${sessionId}/message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -30,7 +48,11 @@ export function InterjectBox({
           isFeedback: awaiting,
         }),
       });
-      setText("");
+      if (res.ok) {
+        setText("");
+        onQueued(trimmed);
+        onSuccessfulSend?.();
+      }
     } finally {
       setSending(false);
     }
@@ -50,20 +72,22 @@ export function InterjectBox({
           <textarea
             rows={1}
             value={text}
-            disabled={disabled || sending}
+            disabled={blocked}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder={
-              awaiting
-                ? "The agents are waiting for your thoughts…"
-                : "Interject or narrow the discussion…"
+              inputLocked
+                ? "Your message is queued…"
+                : awaiting
+                  ? "The agents are waiting for your thoughts…"
+                  : "Interject or narrow the discussion…"
             }
             className="focus-visible:ring-amber-400 max-h-32 min-h-10 flex-1 resize-none rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2"
           />
           <button
             type="button"
             onClick={() => void send()}
-            disabled={disabled || sending}
+            disabled={blocked}
             className="focus-visible:ring-amber-400 shrink-0 rounded-lg bg-neutral-800 px-4 py-2 text-sm font-medium text-neutral-200 transition-colors hover:bg-neutral-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2"
           >
             {awaiting ? "Send feedback" : "Send"}
