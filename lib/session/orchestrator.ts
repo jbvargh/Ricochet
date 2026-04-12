@@ -15,40 +15,41 @@ import {
   awaitDisplayReady,
   awaitFeedback,
   getSession,
+  persistTurn,
   updateSession,
 } from "@/lib/session/store";
-import type { AgentId } from "@/lib/session/types";
+import type { AgentId, Turn } from "@/lib/session/types";
 
-function appendTurn(
+async function appendTurn(
   sessionId: string,
   agent: AgentId,
   text: string,
   stanceAtTurn?: number,
-): void {
-  updateSession(sessionId, (s) => ({
+): Promise<void> {
+  const turn: Turn = {
+    id: crypto.randomUUID(),
+    agent,
+    text,
+    createdAt: Date.now(),
+    stanceAtTurn,
+  };
+  const session = updateSession(sessionId, (s) => ({
     ...s,
-    turns: [
-      ...s.turns,
-      {
-        id: crypto.randomUUID(),
-        agent,
-        text,
-        createdAt: Date.now(),
-        stanceAtTurn,
-      },
-    ],
+    turns: [...s.turns, turn],
   }));
+  const order = session ? session.turns.length - 1 : 0;
+  await persistTurn(sessionId, turn, order);
 }
 
 /** Between agent turns: append pending user text if any (no decay). */
-function consumePendingInterjection(
+async function consumePendingInterjection(
   sessionId: string,
-): { text: string } | null {
+): Promise<{ text: string } | null> {
   const s = getSession(sessionId);
   if (!s?.pendingInterjection) return null;
   const text = s.pendingInterjection;
   updateSession(sessionId, (x) => ({ ...x, pendingInterjection: null }));
-  appendTurn(sessionId, "user", text);
+  await appendTurn(sessionId, "user", text);
   return { text };
 }
 
@@ -61,6 +62,23 @@ export async function* runOrchestrator(
     yield { event: "error", data: { message: "session not found" } };
     return;
   }
+
+  // #region agent log
+  console.log(`[DBG] orchestrator entry id=${sessionId} state=${session.state} turns=${session.turns.length} exchanges=${session.exchangesInCycle}`);
+  // #endregion
+
+  // Always send session_init first so the client has topic/stance regardless of state.
+  yield {
+    event: "session_init",
+    data: {
+      sessionId,
+      topic: session.topic,
+      ideaCount: session.ideaCount,
+      contextType: session.contextType,
+      stance: session.stance,
+    },
+  };
+
   if (session.state === "ended") {
     yield {
       event: "ended",
@@ -73,17 +91,6 @@ export async function* runOrchestrator(
     updateSession(sessionId, (s) => ({ ...s, state: "running" }));
     session = getSession(sessionId)!;
   }
-
-  yield {
-    event: "session_init",
-    data: {
-      sessionId,
-      topic: session.topic,
-      ideaCount: session.ideaCount,
-      contextType: session.contextType,
-      stance: session.stance,
-    },
-  };
 
   try {
     while (true) {
@@ -110,6 +117,11 @@ export async function* runOrchestrator(
       }
 
       if (session.state === "awaiting_user") {
+        // #region agent log
+        console.log(`[DBG] orchestrator AWAITING_USER → awaitFeedback id=${sessionId}`);
+        // #endregion
+        // Re-emit paused so a reconnecting client knows to show the feedback UI.
+        yield { event: "paused", data: { candidates: session.lastCandidates ?? [] } };
         const textFromWait = await awaitFeedback(sessionId);
         session = getSession(sessionId)!;
         if (session.state === "ended") {
@@ -124,7 +136,7 @@ export async function* runOrchestrator(
           continue;
         }
 
-        appendTurn(sessionId, "user", textFromWait.trim());
+        await appendTurn(sessionId, "user", textFromWait.trim());
         yield {
           event: "user_message",
           data: { text: textFromWait.trim() },
@@ -190,18 +202,30 @@ export async function* runOrchestrator(
         return;
       }
 
-      appendTurn(sessionId, "visionary", visionaryText, stanceVBefore);
-      session = getSession(sessionId)!;
-      yield {
-        event: "agent_complete",
-        data: {
-          agent: "visionary",
-          text: visionaryText,
-          stance: session.stance,
-        },
-      };
+      // #region agent log
+      console.log(`[DBG] visionary done id=${sessionId} len=${visionaryText.length}`);
+      // #endregion
 
-      await awaitDisplayReady(sessionId);
+      if (visionaryText.trim()) {
+        await appendTurn(sessionId, "visionary", visionaryText, stanceVBefore);
+        session = getSession(sessionId)!;
+        yield {
+          event: "agent_complete",
+          data: {
+            agent: "visionary",
+            text: visionaryText,
+            stance: session.stance,
+          },
+        };
+
+        // #region agent log
+        console.log(`[DBG] awaitDisplayReady(visionary) WAITING id=${sessionId}`);
+        // #endregion
+        await awaitDisplayReady(sessionId);
+        // #region agent log
+        console.log(`[DBG] awaitDisplayReady(visionary) RESOLVED id=${sessionId}`);
+        // #endregion
+      }
       session = getSession(sessionId)!;
       if (session.state === "ended") {
         yield {
@@ -211,7 +235,7 @@ export async function* runOrchestrator(
         return;
       }
 
-      const afterV = consumePendingInterjection(sessionId);
+      const afterV = await consumePendingInterjection(sessionId);
       if (afterV) {
         yield { event: "user_message", data: { text: afterV.text } };
       }
@@ -239,18 +263,30 @@ export async function* runOrchestrator(
         return;
       }
 
-      appendTurn(sessionId, "critic", criticText, stanceCBefore);
-      session = getSession(sessionId)!;
-      yield {
-        event: "agent_complete",
-        data: {
-          agent: "critic",
-          text: criticText,
-          stance: session.stance,
-        },
-      };
+      // #region agent log
+      console.log(`[DBG] critic done id=${sessionId} len=${criticText.length}`);
+      // #endregion
 
-      await awaitDisplayReady(sessionId);
+      if (criticText.trim()) {
+        await appendTurn(sessionId, "critic", criticText, stanceCBefore);
+        session = getSession(sessionId)!;
+        yield {
+          event: "agent_complete",
+          data: {
+            agent: "critic",
+            text: criticText,
+            stance: session.stance,
+          },
+        };
+
+        // #region agent log
+        console.log(`[DBG] awaitDisplayReady(critic) WAITING id=${sessionId}`);
+        // #endregion
+        await awaitDisplayReady(sessionId);
+        // #region agent log
+        console.log(`[DBG] awaitDisplayReady(critic) RESOLVED id=${sessionId}`);
+        // #endregion
+      }
       session = getSession(sessionId)!;
       if (session.state === "ended") {
         yield {
@@ -260,7 +296,7 @@ export async function* runOrchestrator(
         return;
       }
 
-      const afterC = consumePendingInterjection(sessionId);
+      const afterC = await consumePendingInterjection(sessionId);
       if (afterC) {
         yield { event: "user_message", data: { text: afterC.text } };
       }

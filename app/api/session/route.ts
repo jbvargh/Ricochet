@@ -2,6 +2,7 @@ import { CONTEXT_OPTIONS } from "@/lib/context/umd";
 import { createSession } from "@/lib/session/store";
 import { getProviderOrNull } from "@/lib/llm";
 import { IDEA_COUNT_MAX, IDEA_COUNT_MIN } from "@/lib/config";
+import { getSessionFromCookies } from "@/lib/auth/session-server";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -12,6 +13,11 @@ export async function POST(request: Request) {
       { error: "no LLM provider configured" },
       { status: 503 },
     );
+  }
+
+  const user = await getSessionFromCookies();
+  if (!user) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   let body: unknown;
@@ -66,7 +72,7 @@ export async function POST(request: Request) {
       : null;
 
   try {
-    const session = createSession(topic, ideaCount, contextType);
+    const session = createSession(topic, ideaCount, contextType, user.uid);
     return NextResponse.json({ sessionId: session.id });
   } catch {
     return NextResponse.json({ error: "invalid session parameters" }, { status: 400 });
