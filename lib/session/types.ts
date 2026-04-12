@@ -28,6 +28,7 @@ export type Session = {
   id: string;
   topic: string;
   ideaCount: number;
+  contextType: string | null;
   createdAt: number;
   state: SessionState;
   stance: Stance;

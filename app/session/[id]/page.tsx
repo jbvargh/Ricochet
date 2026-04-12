@@ -1,5 +1,6 @@
 "use client";
 
+import { CONTEXT_OPTIONS } from "@/lib/context/umd";
 import { ChatView } from "@/components/ChatView";
 import { CandidatePanel } from "@/components/CandidatePanel";
 import { EndButton } from "@/components/EndButton";
@@ -13,12 +14,17 @@ import type {
   Stance,
   Turn,
 } from "@/lib/session/types";
+import { useWordThrottle } from "@/hooks/useWordThrottle";
 import { useParams } from "next/navigation";
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
+
+/** Pause after a turn is committed before signaling the server to continue (matches prior UX). */
+const INTER_AGENT_DELAY_MS = 1500;
 
 type StreamState = {
   topic: string;
   ideaCount: number;
+  contextType: string | null;
   stance: Stance;
   turns: Turn[];
   sessionState: SessionState;
@@ -31,7 +37,13 @@ type StreamState = {
 };
 
 type Action =
-  | { type: "init"; topic: string; ideaCount: number; stance: Stance }
+  | {
+      type: "init";
+      topic: string;
+      ideaCount: number;
+      contextType: string | null;
+      stance: Stance;
+    }
   | { type: "token"; agent: "visionary" | "critic"; delta: string }
   | {
       type: "complete";
@@ -56,6 +68,7 @@ function reducer(state: StreamState, action: Action): StreamState {
         ...state,
         topic: action.topic,
         ideaCount: action.ideaCount,
+        contextType: action.contextType,
         stance: action.stance,
         sessionState: "running",
       };
@@ -147,6 +160,7 @@ function reducer(state: StreamState, action: Action): StreamState {
 const initial: StreamState = {
   topic: "",
   ideaCount: 3,
+  contextType: null,
   stance: { visionary: 1, critic: 0.5 },
   turns: [],
   sessionState: "idle",
@@ -162,6 +176,31 @@ export default function SessionPage() {
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
   const [state, dispatch] = useReducer(reducer, initial);
+  const pendingCompleteRef = useRef<Action | null>(null);
+  const [streamFinished, setStreamFinished] = useState(false);
+  const interAgentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { throttledStreaming, isPaused, togglePause } = useWordThrottle(
+    state.streaming,
+    state.sessionState,
+    streamFinished,
+    () => {
+      if (pendingCompleteRef.current) {
+        dispatch(pendingCompleteRef.current);
+        pendingCompleteRef.current = null;
+      }
+      setStreamFinished(false);
+
+      if (interAgentTimerRef.current) {
+        clearTimeout(interAgentTimerRef.current);
+        interAgentTimerRef.current = null;
+      }
+      interAgentTimerRef.current = setTimeout(() => {
+        interAgentTimerRef.current = null;
+        void fetch(`/api/session/${id}/ready`, { method: "POST" });
+      }, INTER_AGENT_DELAY_MS);
+    },
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -171,12 +210,14 @@ export default function SessionPage() {
       const data = JSON.parse((ev as MessageEvent).data) as {
         topic: string;
         ideaCount: number;
+        contextType?: string | null;
         stance: Stance;
       };
       dispatch({
         type: "init",
         topic: data.topic,
         ideaCount: data.ideaCount,
+        contextType: data.contextType ?? null,
         stance: data.stance,
       });
     });
@@ -195,12 +236,13 @@ export default function SessionPage() {
         text: string;
         stance: Stance;
       };
-      dispatch({
+      pendingCompleteRef.current = {
         type: "complete",
         agent: data.agent,
         text: data.text,
         stance: data.stance,
-      });
+      };
+      setStreamFinished(true);
     });
 
     es.addEventListener("user_message", (ev) => {
@@ -235,6 +277,10 @@ export default function SessionPage() {
     });
 
     es.addEventListener("ended", (ev) => {
+      if (interAgentTimerRef.current) {
+        clearTimeout(interAgentTimerRef.current);
+        interAgentTimerRef.current = null;
+      }
       const data = JSON.parse((ev as MessageEvent).data) as {
         finalCandidates: CandidateIdea[];
       };
@@ -248,6 +294,12 @@ export default function SessionPage() {
       }
       try {
         const data = JSON.parse(ev.data) as { message?: string };
+        if (interAgentTimerRef.current) {
+          clearTimeout(interAgentTimerRef.current);
+          interAgentTimerRef.current = null;
+        }
+        pendingCompleteRef.current = null;
+        setStreamFinished(false);
         dispatch({
           type: "error",
           message: data.message ?? "Something went wrong.",
@@ -259,6 +311,10 @@ export default function SessionPage() {
     });
 
     return () => {
+      if (interAgentTimerRef.current) {
+        clearTimeout(interAgentTimerRef.current);
+        interAgentTimerRef.current = null;
+      }
       es.close();
     };
   }, [id]);
@@ -273,7 +329,22 @@ export default function SessionPage() {
         <span className="text-neutral-300 max-w-[min(40vw,320px)] truncate text-sm">
           {state.topic || "…"}
         </span>
+        {state.contextType ? (
+          <span className="text-xs bg-neutral-800 text-neutral-300 shrink-0 rounded-full px-3 py-1">
+            {CONTEXT_OPTIONS.find((o) => o.value === state.contextType)?.label ??
+              state.contextType}
+          </span>
+        ) : null}
         <div className="ml-auto flex items-center gap-2">
+          {state.sessionState === "running" ? (
+            <button
+              type="button"
+              onClick={togglePause}
+              className="focus-visible:ring-amber-400 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-300 hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2"
+            >
+              {isPaused ? "Resume" : "Pause"}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => dispatch({ type: "toggle_judge" })}
@@ -299,7 +370,17 @@ export default function SessionPage() {
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col md:flex-row">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <ChatView turns={state.turns} streaming={state.streaming} />
+            <ChatView
+              turns={state.turns}
+              streaming={
+                throttledStreaming
+                  ? {
+                      agent: throttledStreaming.agent,
+                      text: throttledStreaming.displayedText,
+                    }
+                  : null
+              }
+            />
             {state.candidates ? (
               <div className="px-4 pb-2">
                 <CandidatePanel

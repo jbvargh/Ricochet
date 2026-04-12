@@ -1,10 +1,4 @@
-import {
-  abortSessionOrchestrator,
-  getSession,
-  resolveDisplayReady,
-  resolveFeedback,
-  updateSession,
-} from "@/lib/session/store";
+import { getSession, resolveDisplayReady } from "@/lib/session/store";
 
 export const runtime = "nodejs";
 
@@ -17,11 +11,6 @@ export async function POST(
   if (!session) {
     return new Response(null, { status: 404 });
   }
-
-  updateSession(id, (s) => ({ ...s, state: "ended" }));
-  abortSessionOrchestrator(id);
-  resolveFeedback(id, "");
   resolveDisplayReady(id);
-
   return new Response(null, { status: 204 });
 }

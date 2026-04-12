@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 
 export type BubbleAgent = "visionary" | "critic" | "user";
 
@@ -51,8 +52,8 @@ export function MessageBubble({
         <div className="text-neutral-400 mb-1 text-xs font-medium uppercase tracking-wide">
           {labels[agent] ?? agent}
         </div>
-        <div className="text-neutral-100 whitespace-pre-wrap text-sm leading-relaxed">
-          {text}
+        <div className="prose prose-invert prose-sm max-w-none text-neutral-100 text-sm leading-relaxed [&_ul]:my-1 [&_ul]:ml-4 [&_ul]:list-disc [&_ul]:space-y-0.5 [&_ol]:my-1 [&_ol]:ml-4 [&_ol]:list-decimal [&_ol]:space-y-0.5 [&_p]:mb-2 [&_p:last-child]:mb-0">
+          <ReactMarkdown>{text}</ReactMarkdown>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { getContextPrompt } from "@/lib/context/umd";
 import { getProvider } from "@/lib/llm";
 import type { ChatMessage } from "@/lib/llm/types";
 import { criticDescriptor } from "@/lib/session/decay";
@@ -13,7 +14,7 @@ You are in a live conversation with two separate entities:
 
 Rules:
 - You and the Visionary are converging on exactly {N} strong ideas. When you believe an idea is strong enough to be one of the final {N}, say so explicitly using the phrase "I'd lock in" followed by a short label for the idea.
-- Respond in 2–4 short paragraphs. No bullet lists, no headers, no markdown formatting. Write in flowing prose as if speaking aloud in a meeting.
+- Keep responses to 100–150 words. You may use short bullet points to list critiques or trade-offs. No headers, no bold, no other markdown. Keep it concise and scannable — like quick remarks in a meeting, not a monologue.
 - Make it clear when you are responding to a specific point the other speaker raised, but do NOT address them by the name "Visionary" or "Critic." Keep it natural — use phrases like "the pitch we just heard," "that last idea," "I'll push back on the framing," etc.
 - Never break character. Never mention that you are an AI, a prompt, or a stance value. Never refer to "the debate," "this exercise," or "the system."
 - Do not apologize, do not ask the user questions unprompted. The user will interject on their own when they have something to say.
@@ -39,7 +40,14 @@ export function buildCriticMessages(session: Session): ChatMessage[] {
   const system = CRITIC_PROMPT.replace("{TOPIC}", session.topic)
     .replace("{CRITIC_DESCRIPTOR}", desc)
     .replace("{N}", String(session.ideaCount));
-  return [{ role: "system", content: system }, ...turnsToMessages(session.turns)];
+  const contextPrompt = getContextPrompt(session.contextType);
+  const systemWithContext = contextPrompt
+    ? system + "\n\n--- UMD CONTEXT ---\n" + contextPrompt
+    : system;
+  return [
+    { role: "system", content: systemWithContext },
+    ...turnsToMessages(session.turns),
+  ];
 }
 
 export async function* runCritic(

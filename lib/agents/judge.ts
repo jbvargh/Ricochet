@@ -1,3 +1,4 @@
+import { getContextPrompt } from "@/lib/context/umd";
 import { getProvider } from "@/lib/llm";
 import type { ChatMessage } from "@/lib/llm/types";
 import { JUDGE_TEMPERATURE } from "@/lib/config";
@@ -39,9 +40,13 @@ function buildJudgeMessages(session: Session): ChatMessage[] {
     /{N}/g,
     String(session.ideaCount),
   );
+  const contextPrompt = getContextPrompt(session.contextType);
+  const systemWithContext = contextPrompt
+    ? system + "\n\n--- UMD CONTEXT ---\n" + contextPrompt
+    : system;
   const body = transcriptForJudge(session.turns);
   return [
-    { role: "system", content: system },
+    { role: "system", content: systemWithContext },
     { role: "user", content: body },
   ];
 }

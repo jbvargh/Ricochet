@@ -11,6 +11,7 @@ import {
   resetStance,
 } from "@/lib/session/decay";
 import {
+  awaitDisplayReady,
   awaitFeedback,
   getSession,
   updateSession,
@@ -78,6 +79,7 @@ export async function* runOrchestrator(
       sessionId,
       topic: session.topic,
       ideaCount: session.ideaCount,
+      contextType: session.contextType,
       stance: session.stance,
     },
   };
@@ -198,6 +200,16 @@ export async function* runOrchestrator(
         },
       };
 
+      await awaitDisplayReady(sessionId);
+      session = getSession(sessionId)!;
+      if (session.state === "ended") {
+        yield {
+          event: "ended",
+          data: { finalCandidates: session.lastCandidates ?? [] },
+        };
+        return;
+      }
+
       const afterV = consumePendingInterjection(sessionId);
       if (afterV) {
         yield { event: "user_message", data: { text: afterV.text } };
@@ -236,6 +248,16 @@ export async function* runOrchestrator(
           stance: session.stance,
         },
       };
+
+      await awaitDisplayReady(sessionId);
+      session = getSession(sessionId)!;
+      if (session.state === "ended") {
+        yield {
+          event: "ended",
+          data: { finalCandidates: session.lastCandidates ?? [] },
+        };
+        return;
+      }
 
       const afterC = consumePendingInterjection(sessionId);
       if (afterC) {

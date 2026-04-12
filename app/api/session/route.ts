@@ -1,3 +1,4 @@
+import { CONTEXT_OPTIONS } from "@/lib/context/umd";
 import { createSession } from "@/lib/session/store";
 import { getProviderOrNull } from "@/lib/llm";
 import { IDEA_COUNT_MAX, IDEA_COUNT_MIN } from "@/lib/config";
@@ -36,6 +37,14 @@ export async function POST(request: Request) {
   const ideaCount =
     typeof rawN === "number" && Number.isInteger(rawN) ? rawN : NaN;
 
+  const rawContextType =
+    typeof body === "object" &&
+    body !== null &&
+    "contextType" in body &&
+    typeof (body as { contextType: unknown }).contextType === "string"
+      ? (body as { contextType: string }).contextType
+      : null;
+
   if (!topic.trim()) {
     return NextResponse.json({ error: "topic is required" }, { status: 400 });
   }
@@ -50,8 +59,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const contextType =
+    rawContextType !== null &&
+    CONTEXT_OPTIONS.some((o) => o.value === rawContextType)
+      ? rawContextType
+      : null;
+
   try {
-    const session = createSession(topic, ideaCount);
+    const session = createSession(topic, ideaCount, contextType);
     return NextResponse.json({ sessionId: session.id });
   } catch {
     return NextResponse.json({ error: "invalid session parameters" }, { status: 400 });

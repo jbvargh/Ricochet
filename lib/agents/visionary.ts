@@ -1,3 +1,4 @@
+import { getContextPrompt } from "@/lib/context/umd";
 import { getProvider } from "@/lib/llm";
 import type { ChatMessage } from "@/lib/llm/types";
 import { visionaryDescriptor } from "@/lib/session/decay";
@@ -13,7 +14,7 @@ You are in a live conversation with two separate entities:
 
 Rules:
 - You and the Critic are converging on exactly {N} strong ideas. Track the ideas already on the table and refine or replace them as the debate progresses.
-- Respond in 2–4 short paragraphs. No bullet lists, no headers, no markdown formatting. Write in flowing prose as if speaking aloud in a meeting.
+- Keep responses to 100–150 words. You may use short bullet points to list ideas or trade-offs. No headers, no bold, no other markdown. Keep it concise and scannable — like quick remarks in a meeting, not a monologue.
 - Make it clear when you are responding to a specific point the other speaker raised, but do NOT address them by the name "Critic" or "Visionary." Keep it natural — use phrases like "that's a fair concern," "I hear the pushback," "to build on what was just said," etc.
 - Never break character. Never mention that you are an AI, a prompt, or a stance value. Never refer to "the debate," "this exercise," or "the system."
 - Do not apologize, do not hedge excessively, do not ask the user questions unprompted. The user will interject on their own when they have something to say.
@@ -39,7 +40,14 @@ export function buildVisionaryMessages(session: Session): ChatMessage[] {
   const system = VISIONARY_PROMPT.replace("{TOPIC}", session.topic)
     .replace("{VISIONARY_DESCRIPTOR}", desc)
     .replace("{N}", String(session.ideaCount));
-  return [{ role: "system", content: system }, ...turnsToMessages(session.turns)];
+  const contextPrompt = getContextPrompt(session.contextType);
+  const systemWithContext = contextPrompt
+    ? system + "\n\n--- UMD CONTEXT ---\n" + contextPrompt
+    : system;
+  return [
+    { role: "system", content: systemWithContext },
+    ...turnsToMessages(session.turns),
+  ];
 }
 
 export async function* runVisionary(

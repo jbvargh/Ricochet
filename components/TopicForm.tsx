@@ -1,5 +1,6 @@
 "use client";
 
+import { ContextSelect } from "@/components/ContextSelect";
 import { IDEA_COUNT_DEFAULT, IDEA_COUNT_MAX, IDEA_COUNT_MIN } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -7,6 +8,7 @@ import { useState } from "react";
 export function TopicForm() {
   const router = useRouter();
   const [topic, setTopic] = useState("");
+  const [contextType, setContextType] = useState<string | null>(null);
   const [ideaCount, setIdeaCount] = useState(IDEA_COUNT_DEFAULT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +21,7 @@ export function TopicForm() {
       const res = await fetch("/api/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, ideaCount }),
+        body: JSON.stringify({ topic, ideaCount, contextType }),
       });
       if (res.status === 503) {
         setError("No LLM provider is configured on the server.");
@@ -59,6 +61,12 @@ export function TopicForm() {
           onChange={(e) => setTopic(e.target.value)}
           className="focus-visible:ring-amber-400 w-full resize-y rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-neutral-100 placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2"
         />
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-neutral-300">
+          UMD Context (optional)
+        </label>
+        <ContextSelect value={contextType} onChange={setContextType} />
       </div>
       <div className="flex flex-col gap-2">
         <label htmlFor="ideaCount" className="text-sm font-medium text-neutral-300">

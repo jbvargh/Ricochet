@@ -26,7 +26,7 @@ export function ChatView({
     } else {
       setTimeout(() => setShowNew(true), 0);
     }
-  }, [turns.length]);
+  }, [turns.length, streaming?.text]);
 
   function scrollToBottom() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

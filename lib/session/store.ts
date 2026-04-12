@@ -7,7 +7,14 @@ const sessions = new Map<string, Session>();
 /** Single waiter per session: resolved when user POSTs while orchestrator awaits feedback, or on end. */
 const feedbackWaiters = new Map<string, (text: string) => void>();
 
-export function createSession(topic: string, ideaCount: number): Session {
+/** Resolved when client POSTs /ready after finishing throttled display of an agent turn. */
+const displayReadyWaiters = new Map<string, () => void>();
+
+export function createSession(
+  topic: string,
+  ideaCount: number,
+  contextType: string | null,
+): Session {
   if (
     typeof topic !== "string" ||
     topic.trim().length === 0 ||
@@ -22,6 +29,7 @@ export function createSession(topic: string, ideaCount: number): Session {
     id,
     topic: topic.trim(),
     ideaCount,
+    contextType,
     createdAt: Date.now(),
     state: "idle",
     stance: initialStance(),
@@ -68,6 +76,25 @@ export function clearFeedbackWaiter(sessionId: string): void {
   feedbackWaiters.delete(sessionId);
 }
 
+/** Blocks until client POSTs /api/session/[id]/ready (after UI finishes typing the turn). */
+export function awaitDisplayReady(sessionId: string): Promise<void> {
+  return new Promise((resolve) => {
+    displayReadyWaiters.set(sessionId, resolve);
+  });
+}
+
+export function resolveDisplayReady(sessionId: string): void {
+  const r = displayReadyWaiters.get(sessionId);
+  displayReadyWaiters.delete(sessionId);
+  if (r) {
+    r();
+  }
+}
+
+export function clearDisplayReadyWaiter(sessionId: string): void {
+  displayReadyWaiters.delete(sessionId);
+}
+
 const orchestratorLocks = new Set<string>();
 
 export function tryAcquireOrchestratorLock(sessionId: string): boolean {
@@ -91,6 +118,7 @@ export function setSessionAbort(
 
 export function abortSessionOrchestrator(sessionId: string): void {
   sessionAborts.get(sessionId)?.abort();
+  resolveDisplayReady(sessionId);
 }
 
 export function clearSessionAbort(sessionId: string): void {
