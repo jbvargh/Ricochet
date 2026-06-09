@@ -30,7 +30,7 @@ The UI streams the dialogue in real time (Server-Sent Events), shows **stance** 
 1. **Clone and install**
 
    ```bash
-   cd Ricochet
+   cd TerpSpark
    npm install
    ```
 
