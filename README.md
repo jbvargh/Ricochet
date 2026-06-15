@@ -120,6 +120,28 @@ npm run lint:fix   # auto-fix where ESLint can
 
 Run lint before opening a pull request or after larger refactors. Some rules (especially newer React 19 ref checks in streaming components) may report errors in code that is intentionally written for SSE and word-throttle behavior; see `eslint.config.mjs` for project-specific rule overrides.
 
+### Continuous integration (GitHub Actions)
+
+**GitHub Actions** runs automated checks in the cloud whenever you push to GitHub. This repo includes a workflow at **`.github/workflows/ci.yml`** that installs dependencies and runs `npm run build` on every push, so broken TypeScript or Next.js compile errors are caught before they land on `main`.
+
+**How to enable it**
+
+1. Push this repository to GitHub (create a new repo on [github.com](https://github.com/new) if you have not already).
+2. Commit and push the workflow file — no secrets or repository settings are required for the build step; `next build` completes without real API keys in this project.
+3. Open your repo on GitHub → **Actions**. The first workflow run should appear within a minute of your push.
+4. Optional: under **Settings → Branches**, add a branch protection rule that requires the **CI** check to pass before merging.
+
+**What the workflow does**
+
+| Step | Command / action |
+| --- | --- |
+| Trigger | Every `git push` to any branch |
+| Runner | `ubuntu-latest` with Node.js 20 |
+| Install | `npm ci` (reproducible install from `package-lock.json`) |
+| Verify | `npm run build` |
+
+To also lint in CI, add `- run: npm run lint` after the build step (fix or relax existing lint errors first — see [ESLint](#eslint) above).
+
 ### Scripts
 
 | Command | Purpose |
@@ -139,6 +161,7 @@ Run lint before opening a pull request or after larger refactors. Some rules (es
 - `components/` — chat UI, stance meter, panels, forms
 - `eslint.config.mjs` — ESLint flat config
 - `.env.local.example` — documented template for all environment variables
+- `.github/workflows/ci.yml` — GitHub Actions build on every push
 
 ## Security notes
 
