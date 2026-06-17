@@ -1,15 +1,58 @@
 # TerpSpark
 by Joshua Varghese, Daksh Patel, Vishal Senthilkumar and Aditya Mahesh
 
-**TerpSpark** is a web app that turns a rough topic into stronger ideas through a **structured two-agent debate**. You set a topic and how many candidate ideas you want; a **Visionary** pushes for bold directions while a **Critic** stress-tests them. A **Judge** model watches the conversation, decides when the agents have converged on your target number of shared candidates, and can pause for your feedback so the next round refines what already worked.
+**TerpSpark** is a web app that turns a rough topic into stronger ideas through a **structured two-agent debate**. Instead of one chatbot that agrees with everything you say, TerpSpark runs a live back-and-forth between specialized AI agents — then pauses at checkpoints so you can steer the next round.
 
-The UI streams the dialogue in real time (Server-Sent Events), shows **stance** evolution (how “ambitious” vs “grounded” the Visionary is, and how “constructive” vs “harsh” the Critic is), and lets you **interject** anytime without resetting the cycle.
+## What it does
+
+### The problem it solves
+
+Most AI brainstorming tools give you one voice. That voice tends to validate your first idea, miss blind spots, and produce a wall of text that is hard to scan. TerpSpark forces **creative tension**: one agent expands the idea space while another stress-tests it, until both converge on a short list of candidates you can actually use.
+
+### How a session works
+
+1. **Start a debate** — Visit `/dashboard/new` in the running app (no account required). Enter a topic, choose how many ideas the agents should converge on (1–10), and optionally pick a **UMD context** (Startup Shell, thesis direction, policy proposal, etc.) so prompts are grounded in University of Maryland programs and culture.
+
+2. **Watch the agents debate** — A **Visionary** and **Critic** take turns in a live chat. Replies stream word-by-word over Server-Sent Events at a readable pace (~250 WPM). You can pause/resume the display if you need to catch up.
+
+3. **See the dynamics** — A **stance meter** tracks how bold vs pragmatic the Visionary is, and how constructive vs harsh the Critic is. These values shift automatically each exchange (stance decay), so long debates naturally move from wild brainstorming toward sharper refinement.
+
+4. **Interject anytime** — Type feedback between turns without stopping the session. Your message is queued and inserted before the next agent speaks, steering scope or emphasis without wiping the transcript.
+
+5. **Hit checkpoints** — A silent **Judge** periodically reviews the full transcript and decides whether the agents have converged on your target number of ideas. When they have (or a cycle limit is reached), the debate **pauses** and surfaces **candidate ideas** — each with a title and one-line summary.
+
+6. **Steer the next cycle** — Reply at a checkpoint to refine direction. Stance resets, the agents resume with your feedback in context, and the Judge re-evaluates. Say you are satisfied and the session ends with final candidates.
+
+7. **Return later (with login)** — Sign in to save sessions to your **dashboard**. Past debates show status (Active, Awaiting, Resolved, Ended), let you reopen live sessions, and persist message history to Azure Cosmos DB when configured.
+
+### The three agents
+
+| Agent | Visible in chat? | Role |
+| --- | --- | --- |
+| **Visionary** | Yes | Proposes and advocates ideas — starts bold and gradually grounds over the cycle. |
+| **Critic** | Yes | Challenges assumptions, surfaces risks, and signals when an idea is strong enough to keep (`"I'd lock in …"`). |
+| **Judge** | No | Reads the transcript, returns structured JSON: converged or not, reason, candidate list, and whether the user wants to stop. |
+
+The Judge runs on a schedule (every few exchanges) and again after user feedback at a pause. When Groq is configured, the Judge prefers it to spare quota on your main LLM provider.
+
+### What you get at the end
+
+Concrete **candidate ideas** — short titles and summaries the agents agreed were worth keeping — plus the full debate transcript. Use them for pitches, essays, research directions, policy memos, or any brainstorm where you want both expansion and rigor.
+
+### Under the hood (short version)
+
+- **Orchestrator** (`lib/session/orchestrator.ts`) drives Visionary → Critic → stance update → optional Judge in a loop.
+- **LLM providers** are pluggable with a priority fallback chain (TerpAI → Anthropic → Gemini → OpenAI → Groq).
+- **Auth** uses Firebase; **persistence** uses Azure Cosmos DB for session summaries and per-message history.
+
+For the full design rationale, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Why it’s useful
 
-- **Reduces one-sided brainstorming**: Instead of a single chatbot agreeing with you, you get explicit tension between expansion and critique.
-- **Convergence you can steer**: Periodic checkpoints surface concrete candidate ideas; your reply reshapes the next pass instead of starting from zero.
-- **Transparent dynamics**: Stance decay over exchanges makes the “temperature” of each agent legible, so the arc of the session is easier to reason about than a flat assistant thread.
+- **Reduces one-sided brainstorming**: Explicit tension between expansion and critique beats a single agreeable assistant.
+- **Convergence you can steer**: Checkpoints surface concrete candidates; your reply reshapes the next pass instead of starting from zero.
+- **Transparent dynamics**: Stance decay makes each agent’s “temperature” legible over the arc of a session.
+- **Built for UMD**: Optional context packs ground debates in campus programs, research culture, and local knowledge.
 
 ## Tech stack
 
