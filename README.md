@@ -20,6 +20,8 @@ The UI streams the dialogue in real time (Server-Sent Events), shows **stance** 
 - **Persistence**: Azure Cosmos DB for session summaries and message history
 - **Linting**: [ESLint](https://eslint.org/) with `eslint-config-next` (Core Web Vitals + TypeScript)
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture decisions (Visionary/Critic/Judge, stance decay, LLM fallback chain).
+
 ## Prerequisites
 
 - Node.js 20+ (recommended for current Next.js)
@@ -162,6 +164,7 @@ To also lint in CI, add `- run: npm run lint` after the build step (fix or relax
 - `eslint.config.mjs` — ESLint flat config
 - `.env.local.example` — documented template for all environment variables
 - `.github/workflows/ci.yml` — GitHub Actions build on every push
+- `CONTRIBUTING.md` — architecture and contribution guidelines
 
 ## Security notes
 
