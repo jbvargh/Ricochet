@@ -1,13 +1,13 @@
-# TerpSpark
+# Ricochet
 by Joshua Varghese, Daksh Patel, Vishal Senthilkumar and Aditya Mahesh
 
-**TerpSpark** is a web app that turns a rough topic into stronger ideas through a **structured two-agent debate**. Instead of one chatbot that agrees with everything you say, TerpSpark runs a live back-and-forth between specialized AI agents — then pauses at checkpoints so you can steer the next round.
+**Ricochet** is a web app that turns a rough topic into stronger ideas through a **structured two-agent debate**. Instead of one chatbot that agrees with everything you say, Ricochet runs a live back-and-forth between specialized AI agents — then pauses at checkpoints so you can steer the next round.
 
 ## What it does
 
 ### The problem it solves
 
-Most AI brainstorming tools give you one voice. That voice tends to validate your first idea, miss blind spots, and produce a wall of text that is hard to scan. TerpSpark forces **creative tension**: one agent expands the idea space while another stress-tests it, until both converge on a short list of candidates you can actually use.
+Most AI brainstorming tools give you one voice. That voice tends to validate your first idea, miss blind spots, and produce a wall of text that is hard to scan. Ricochet forces **creative tension**: one agent expands the idea space while another stress-tests it, until both converge on a short list of candidates you can actually use.
 
 ### How a session works
 
@@ -76,7 +76,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture decisions (Visionary/Cri
 1. **Clone and install**
 
    ```bash
-   cd TerpSpark
+   cd Ricochet
    npm install
    ```
 

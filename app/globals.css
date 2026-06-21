@@ -138,7 +138,7 @@
   }
 }
 
-@keyframes terpspark-bubble-in {
+@keyframes ricochet-bubble-in {
   from {
     opacity: 0;
     transform: translateY(16px);
@@ -149,8 +149,8 @@
   }
 }
 
-.terpspark-bubble-in {
-  animation: terpspark-bubble-in 200ms ease-out forwards;
+.ricochet-bubble-in {
+  animation: ricochet-bubble-in 200ms ease-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -162,7 +162,7 @@
     transition-duration: 0.01ms !important;
   }
 
-  .terpspark-bubble-in {
+  .ricochet-bubble-in {
     animation: none;
     opacity: 1;
     transform: none;

@@ -7,7 +7,7 @@ import { EndButton } from "@/components/EndButton";
 import { InterjectBox } from "@/components/InterjectBox";
 import { JudgePanel } from "@/components/JudgePanel";
 import { PendingMessageQueue } from "@/components/PendingMessageQueue";
-import { TerpSparkHomeLink } from "@/components/TerpSparkWordmark";
+import { RicochetHomeLink } from "@/components/RicochetWordmark";
 import { SessionChatTitle } from "@/components/SessionChatTitle";
 import { StanceMeter } from "@/components/StanceMeter";
 import type {
@@ -27,7 +27,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 const INTER_AGENT_DELAY_MS = 1500;
 
 function chatTitleStorageKey(sessionId: string) {
-  return `terpspark-chat-title-${sessionId}`;
+  return `ricochet-chat-title-${sessionId}`;
 }
 
 type StreamState = {
@@ -482,7 +482,7 @@ export default function SessionPage() {
   return (
     <div className="bg-neutral-950 flex h-[100dvh] flex-col">
       <header className="flex h-[56px] shrink-0 items-center gap-3 border-b border-neutral-800 px-4">
-        <TerpSparkHomeLink />
+        <RicochetHomeLink />
         <span className="shrink-0 font-mono text-[9px] text-neutral-700">//</span>
         <SessionChatTitle
           title={state.topic}

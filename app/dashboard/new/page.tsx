@@ -1,11 +1,11 @@
-import { TerpSparkHomeLink } from "@/components/TerpSparkWordmark";
+import { RicochetHomeLink } from "@/components/RicochetWordmark";
 import { TopicForm } from "@/components/TopicForm";
 
 export default function NewIdeaPage() {
   return (
     <div className="flex min-h-screen flex-col bg-neutral-950">
       <header className="flex h-[56px] shrink-0 items-center gap-3 border-b border-neutral-800 px-6">
-        <TerpSparkHomeLink />
+        <RicochetHomeLink />
         <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-neutral-600">
           // New_idea
         </span>

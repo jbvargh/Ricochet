@@ -1,4 +1,4 @@
-import { TerpSparkWordmark } from "@/components/TerpSparkWordmark";
+import { RicochetWordmark } from "@/components/RicochetWordmark";
 import Link from "next/link";
 
 export default function Home() {
@@ -6,7 +6,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-neutral-950">
       {/* Nav bar */}
       <header className="flex h-[56px] shrink-0 items-center justify-between border-b border-neutral-800 px-8">
-        <TerpSparkWordmark className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100" />
+        <RicochetWordmark className="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100" />
         <div className="flex items-center gap-4">
           <Link
             href="/login?mode=signup"
@@ -29,7 +29,7 @@ export default function Home() {
         <div className="flex flex-1 flex-col justify-center px-8 py-20 lg:px-16 lg:py-0">
           {/* System label */}
           <p className="mb-8 font-mono text-[10px] font-medium uppercase tracking-[0.25em] text-red-600">
-            <TerpSparkWordmark className="font-mono" /> // Debate Engine // v1.0
+            <RicochetWordmark className="font-mono" /> // Debate Engine // v1.0
           </p>
 
           {/* Hero headline */}
@@ -41,14 +41,14 @@ export default function Home() {
               One idea.
             </span>
             <span className="block text-[clamp(3.5rem,8vw,7rem)] italic tracking-tight text-red-600">
-              <TerpSparkWordmark />
+              <RicochetWordmark />
               .
             </span>
           </h1>
 
           {/* Tagline */}
           <p className="mt-8 max-w-sm text-sm leading-relaxed text-neutral-400">
-            <TerpSparkWordmark muted /> pairs a visionary with a critic: bold ideas meet
+            <RicochetWordmark muted /> pairs a visionary with a critic: bold ideas meet
             rigorous stress-testing until both agents converge on the strongest version of
             your thinking.
           </p>
@@ -119,7 +119,7 @@ export default function Home() {
       {/* Footer strip */}
       <footer className="flex h-10 shrink-0 items-center border-t border-neutral-800 px-8">
         <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-700">
-          <TerpSparkWordmark className="font-mono" muted /> // Debate Engine // No account needed to start
+          <RicochetWordmark className="font-mono" muted /> // Debate Engine // No account needed to start
         </p>
       </footer>
     </div>

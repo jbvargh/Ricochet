@@ -1,6 +1,6 @@
 "use client";
 
-import { TerpSparkHomeLink } from "@/components/TerpSparkWordmark";
+import { RicochetHomeLink } from "@/components/RicochetWordmark";
 import {
   type DashboardSession,
   getDashboardSessions,
@@ -180,7 +180,7 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="flex h-[56px] shrink-0 items-center justify-between border-b border-neutral-800 px-6">
         <div className="flex items-center gap-3">
-          <TerpSparkHomeLink />
+          <RicochetHomeLink />
           <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-neutral-600">
             // Sessions
           </span>

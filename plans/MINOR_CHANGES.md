@@ -6,7 +6,7 @@
 
 ## Context
 
-TerpSpark's AI debate currently has two UX problems:
+Ricochet's AI debate currently has two UX problems:
 1. **Agent responses are too long and dense** — the prompts enforce "2-4 short paragraphs" with no bullet points, making responses hard to scan during a fast-moving debate.
 2. **Text appears too fast** — LLM tokens stream directly to the UI at generation speed, which is faster than anyone can read. This makes the debate feel robotic and overwhelming.
 

@@ -6,7 +6,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { TerpSparkHomeLink } from "@/components/TerpSparkWordmark";
+import { RicochetHomeLink } from "@/components/RicochetWordmark";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -102,8 +102,8 @@ function LoginPageContent() {
       {/* ── Left panel ── */}
       <div className="relative flex flex-col justify-between bg-neutral-900 px-10 py-10 md:w-[45%]">
         <div className="flex w-full items-start justify-between gap-4">
-          <TerpSparkHomeLink
-            tBoxClassName="flex h-6 w-6 shrink-0 items-center justify-center bg-red-700 text-[10px] font-black text-white"
+          <RicochetHomeLink
+            badgeClassName="flex h-6 w-6 shrink-0 items-center justify-center bg-red-700 text-[10px] font-black text-white"
             wordmarkClassName="font-display text-sm font-black italic uppercase tracking-widest text-neutral-100"
           />
         </div>

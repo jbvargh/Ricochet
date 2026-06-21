@@ -1,6 +1,6 @@
-# Contributing to TerpSpark
+# Contributing to Ricochet
 
-Thank you for helping improve TerpSpark. This document explains **why** the core systems are designed the way they are — the Visionary/Critic/Judge pattern, stance decay, and the LLM fallback chain — so you can change behavior without accidentally fighting the architecture.
+Thank you for helping improve Ricochet. This document explains **why** the core systems are designed the way they are — the Visionary/Critic/Judge pattern, stance decay, and the LLM fallback chain — so you can change behavior without accidentally fighting the architecture.
 
 For setup, environment variables, ESLint, and CI, see [README.md](README.md).
 
@@ -8,7 +8,7 @@ For setup, environment variables, ESLint, and CI, see [README.md](README.md).
 
 ## Architecture at a glance
 
-TerpSpark is not a single chatbot. A **session orchestrator** (`lib/session/orchestrator.ts`) drives a turn-based loop:
+Ricochet is not a single chatbot. A **session orchestrator** (`lib/session/orchestrator.ts`) drives a turn-based loop:
 
 1. **Visionary** streams a proposal.
 2. **Critic** streams a response.
@@ -125,9 +125,9 @@ Configured in `lib/llm/index.ts`. On first use, factories are tried **in order**
 | 4 | OpenAI | `OPENAI_API_KEY` |
 | 5 | Groq | `GROQ_API_KEY` |
 
-**Why a chain?** TerpSpark targets UMD/TerpAI first, but contributors and deployers may only have keys for commercial APIs. One codebase should run anywhere without code changes — only env configuration.
+**Why a chain?** Ricochet targets UMD/TerpAI first, but contributors and deployers may only have keys for commercial APIs. One codebase should run anywhere without code changes — only env configuration.
 
-**Why memoize?** Provider selection is logged once at startup (`[terpspark] selected LLM provider: …`). Mixing providers mid-session would split context handling and billing unpredictably.
+**Why memoize?** Provider selection is logged once at startup (`[ricochet] selected LLM provider: …`). Mixing providers mid-session would split context handling and billing unpredictably.
 
 If no provider is configured, the server still boots, but routes that need an LLM return **503** with `{ "error": "no LLM provider configured" }`.
 
