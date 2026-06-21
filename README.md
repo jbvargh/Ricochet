@@ -23,7 +23,7 @@ Most AI brainstorming tools give you one voice. That voice tends to validate you
 
 6. **Steer the next cycle** — Reply at a checkpoint to refine direction. Stance resets, the agents resume with your feedback in context, and the Judge re-evaluates. Say you are satisfied and the session ends with final candidates.
 
-7. **Return later (with login)** — Sign in to save sessions to your **dashboard**. Past debates show status (Active, Awaiting, Resolved, Ended), let you reopen live sessions, and persist message history to Azure Cosmos DB when configured.
+7. **Return later (with login)** — Sign in to save sessions to your **dashboard**. Past debates show status (Active, Awaiting, Resolved, Ended), let you reopen live sessions, and persist message history to **MongoDB** when configured.
 
 ### The three agents
 
@@ -43,7 +43,7 @@ Concrete **candidate ideas** — short titles and summaries the agents agreed we
 
 - **Orchestrator** (`lib/session/orchestrator.ts`) drives Visionary → Critic → stance update → optional Judge in a loop.
 - **LLM providers** are pluggable with a priority fallback chain (TerpAI → Anthropic → Gemini → OpenAI → Groq).
-- **Auth** uses Firebase; **persistence** uses Azure Cosmos DB for session summaries and per-message history.
+- **Auth** uses Firebase; **persistence** uses MongoDB for session summaries and per-message history.
 
 For the full design rationale, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -60,7 +60,7 @@ For the full design rationale, see [CONTRIBUTING.md](CONTRIBUTING.md).
 - **UI**: React, Tailwind CSS, shadcn-style components
 - **LLMs**: Pluggable providers (see [Environment variables](#environment-variables)); Visionary, Critic, and most Judge calls share a **fallback chain**; the Judge prefers **Groq** when configured to spare quota on your main provider
 - **Auth**: Firebase Authentication + signed session cookies (`jose`)
-- **Persistence**: Azure Cosmos DB for session summaries and message history
+- **Persistence**: [MongoDB](https://www.mongodb.com/) (Atlas or self-hosted) for session summaries and message history
 - **Linting**: [ESLint](https://eslint.org/) with `eslint-config-next` (Core Web Vitals + TypeScript)
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture decisions (Visionary/Critic/Judge, stance decay, LLM fallback chain).
@@ -119,17 +119,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture decisions (Visionary/Cri
    | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Client config |
    | `FIREBASE_SERVICE_ACCOUNT_KEY` | Server-only — full JSON on one line or path to a file (see `firebase-service-account-example.json`) |
 
-   **Azure Cosmos DB** (required for dashboard history and durable sessions)
+   **MongoDB** (required for dashboard history and durable sessions)
 
    | Variable | Default | Notes |
    | --- | --- | --- |
-   | `COSMOS_ENDPOINT` | — | Account URI from Azure Portal |
-   | `COSMOS_KEY` | — | Primary or secondary key |
-   | `COSMOS_DATABASE` | `ricochet` | Database name |
-   | `COSMOS_CONTAINER` | `sessions` | Partition key: `/userId` |
-   | `COSMOS_MESSAGES_CONTAINER` | `messages` | Partition key: `/sessionId` |
+   | `MONGODB_URI` | — | Connection string from Atlas or local MongoDB (server-only) |
+   | `MONGODB_DATABASE` | `ricochet` | Database name |
+   | `MONGODB_SESSIONS_COLLECTION` | `sessions` | Session summaries; queried by `userId` |
+   | `MONGODB_MESSAGES_COLLECTION` | `messages` | Chat turns; queried by `sessionId`, sorted by `order` |
 
-   Without Cosmos, live debates still work in memory; listing sessions and reloading history will fail until Cosmos is configured.
+   Without MongoDB, live debates still work in memory; listing sessions and reloading history will fail until it is configured. See `.env.local.example` for connection-string format and recommended indexes.
 
 3. **Run**
 
@@ -203,6 +202,7 @@ To also lint in CI, add `- run: npm run lint` after the build step (fix or relax
 - `lib/session/` — orchestration, in-memory session state, types, stance decay
 - `lib/agents/` — Visionary, Critic, Judge prompts and calls
 - `lib/llm/` — provider selection and adapters
+- `lib/mongodb/` — MongoDB client for sessions and messages
 - `components/` — chat UI, stance meter, panels, forms
 - `eslint.config.mjs` — ESLint flat config
 - `.env.local.example` — documented template for all environment variables
@@ -211,7 +211,7 @@ To also lint in CI, add `- run: npm run lint` after the build step (fix or relax
 
 ## Security notes
 
-- Never commit `.env.local`, real Firebase service account JSON, or API keys.
+- Never commit `.env.local`, real Firebase service account JSON, MongoDB connection strings, or API keys.
 - `firebase-service-account.json` in this repo should only be a local secret; prefer env-based configuration for deployment.
 - `SESSION_SECRET` must be unique per environment; treat it like a password.
 

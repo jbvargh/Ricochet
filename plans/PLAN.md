@@ -32,7 +32,7 @@ These are the single source of truth. Every phase below references them.
 | Accent — Critic | `slate-400` |
 | Accent — Judge / system | `emerald-400` |
 | Package manager | `npm` |
-| State persistence | **In-memory `Map` keyed by sessionId**. No database in MVP. Azure integration is explicitly out of scope for this plan. |
+| State persistence | **In-memory `Map` keyed by sessionId**, with optional **MongoDB** for durable sessions and dashboard history. |
 | Transport (server → client) | **Server-Sent Events (SSE)**. Not WebSockets. |
 | Transport (client → server) | Standard `fetch` POST for session creation, interjection, and end. |
 
@@ -561,7 +561,7 @@ Do each phase fully before starting the next. At the end of each phase, run `npm
 
 Do **not** implement any of the following. They are either future work or user-confirmed non-goals:
 
-- Database persistence / Azure integration (sessions live in process memory only)
+- MongoDB persistence for cross-request session reload and dashboard (see `lib/mongodb/client.ts`)
 - Multi-user auth or accounts
 - Session history or listing past sessions
 - Export (PDF / markdown) of results

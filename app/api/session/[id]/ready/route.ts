@@ -1,6 +1,6 @@
 import {
   getSession,
-  loadSessionFromCosmos,
+  loadPersistedSession,
   resolveDisplayReady,
 } from "@/lib/session/store";
 import { getSessionFromCookies } from "@/lib/auth/session-server";
@@ -16,7 +16,7 @@ export async function POST(
   let session = getSession(id);
   if (!session) {
     const user = await getSessionFromCookies();
-    session = await loadSessionFromCosmos(id, user?.uid) ?? undefined;
+    session = await loadPersistedSession(id, user?.uid) ?? undefined;
   }
   if (!session) {
     return new Response(null, { status: 404 });

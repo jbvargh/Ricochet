@@ -183,7 +183,7 @@ Complete visual restyle. Apply the following changes:
    - Add `uppercase tracking-widest text-xs font-bold`
    - Change `rounded-lg` → `rounded-sm`
 
-8. **Footer note about Firebase/CosmosDB**: keep as-is.
+8. **Footer note about Firebase/MongoDB**: keep as-is.
 
 ---
 

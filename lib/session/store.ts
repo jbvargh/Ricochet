@@ -7,18 +7,18 @@ import {
   getSessionDoc,
   getSessionDocById,
   getMessagesBySession,
-  type CosmosSessionDocument,
-  type CosmosMessageDocument,
-} from "@/lib/cosmos/client";
+  type SessionDocument,
+  type MessageDocument,
+} from "@/lib/mongodb/client";
 import type { Turn } from "@/lib/session/types";
 
 const sessions = new Map<string, Session>();
 
-/** Maps sessionId → userId for Cosmos persistence. */
+/** Maps sessionId → userId for MongoDB persistence. */
 const sessionOwners = new Map<string, string>();
 
-/** Build a Cosmos session document from an in-memory Session. */
-function toCosmosSessionDoc(session: Session, userId: string): CosmosSessionDocument {
+/** Build a MongoDB session document from an in-memory Session. */
+function toSessionDocument(session: Session, userId: string): SessionDocument {
   return {
     id: session.id,
     userId,
@@ -38,8 +38,8 @@ function toCosmosSessionDoc(session: Session, userId: string): CosmosSessionDocu
 function persistSessionAsync(session: Session): void {
   const userId = sessionOwners.get(session.id);
   if (!userId) return;
-  upsertSessionDoc(toCosmosSessionDoc(session, userId)).catch((e) => {
-    console.error("[cosmos] failed to persist session", session.id, e);
+  upsertSessionDoc(toSessionDocument(session, userId)).catch((e) => {
+    console.error("[mongodb] failed to persist session", session.id, e);
   });
 }
 
@@ -121,11 +121,11 @@ export function clearFeedbackWaiter(sessionId: string): void {
   feedbackWaiters.delete(sessionId);
 }
 
-/** Persist a single turn to the Cosmos messages container. Awaited by the orchestrator for durability. */
+/** Persist a single turn to MongoDB. Awaited by the orchestrator for durability. */
 export async function persistTurn(sessionId: string, turn: Turn, order: number): Promise<void> {
   const userId = sessionOwners.get(sessionId);
   if (!userId) return;
-  const doc: CosmosMessageDocument = {
+  const doc: MessageDocument = {
     id: turn.id,
     sessionId,
     agent: turn.agent,
@@ -138,18 +138,18 @@ export async function persistTurn(sessionId: string, turn: Turn, order: number):
 }
 
 /**
- * Load a session from Cosmos into the in-memory store.
- * Returns null if the session doesn't exist in Cosmos.
- * If the session is already in memory, returns it without hitting Cosmos.
+ * Load a session from MongoDB into the in-memory store.
+ * Returns null if the session doesn't exist in the database.
+ * If the session is already in memory, returns it without hitting MongoDB.
  */
-export async function loadSessionFromCosmos(
+export async function loadPersistedSession(
   sessionId: string,
   userId?: string,
 ): Promise<Session | null> {
   const existing = sessions.get(sessionId);
   if (existing) return existing;
 
-  let doc: CosmosSessionDocument | null;
+  let doc: SessionDocument | null;
   if (userId) {
     doc = await getSessionDoc(sessionId, userId);
   } else {

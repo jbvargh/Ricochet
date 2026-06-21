@@ -16,7 +16,7 @@ TerpSpark is not a single chatbot. A **session orchestrator** (`lib/session/orch
 4. **Judge** may run on a schedule and pause for the user.
 5. The user can **interject** between turns without stopping the cycle.
 
-The UI receives updates over **Server-Sent Events** (SSE). Session state lives in memory during a debate and can be persisted to Azure Cosmos DB when configured.
+The UI receives updates over **Server-Sent Events** (SSE). Session state lives in memory during a debate and is persisted to **MongoDB** when configured (`MONGODB_URI` and related env vars).
 
 ```mermaid
 flowchart TD
@@ -151,6 +151,45 @@ Do not hardcode API keys or provider names in agents — always go through `getP
 
 ---
 
+## Persistence (MongoDB)
+
+### Why MongoDB?
+
+Live debates run in an in-memory `Map` (`lib/session/store.ts`) for low latency and simple orchestration locking. **MongoDB** backs durable storage for:
+
+- **Dashboard session list** — topic, state, candidates, turn count (per `userId`)
+- **Transcript reload** — individual turns with agent, text, and order (per `sessionId`)
+- **Cross-request continuity** — API routes call `loadPersistedSession()` to hydrate memory when a process restarts or a session is opened from the dashboard
+
+The client module lives at `lib/mongodb/client.ts`. It uses the official `mongodb` driver and reads:
+
+| Env var | Default | Collection purpose |
+| --- | --- | --- |
+| `MONGODB_URI` | — (required) | Atlas SRV or local connection string |
+| `MONGODB_DATABASE` | `ricochet` | Database name |
+| `MONGODB_SESSIONS_COLLECTION` | `sessions` | Full session documents |
+| `MONGODB_MESSAGES_COLLECTION` | `messages` | One document per debate turn |
+
+### Write pattern
+
+- **Sessions**: `replaceOne` upserts keyed on `{ id, userId }` after orchestrator updates (fire-and-forget from `persistSessionAsync`).
+- **Messages**: `replaceOne` upserts keyed on `{ id, sessionId }`; `persistTurn` is awaited so turns are durable before the next agent speaks.
+
+### Indexes
+
+Create these once per environment for good dashboard and reload performance:
+
+```
+sessions:  { userId: 1, createdAt: -1 }
+           { id: 1, userId: 1 }
+messages:  { sessionId: 1, order: 1 }
+           { id: 1, sessionId: 1 }
+```
+
+Without MongoDB configured, debate APIs still work in memory; `/api/sessions` and history reload return errors until `MONGODB_URI` is set.
+
+---
+
 ## Key files
 
 | Path | Responsibility |
@@ -158,7 +197,8 @@ Do not hardcode API keys or provider names in agents — always go through `getP
 | `lib/config.ts` | All tunable debate constants (stance, judge schedule, word limits, buckets). |
 | `lib/session/orchestrator.ts` | Debate loop, SSE events, judge scheduling, pause/resume. |
 | `lib/session/decay.ts` | Stance math and bucket lookup. |
-| `lib/session/store.ts` | In-memory session state, persistence hooks, feedback waiters. |
+| `lib/session/store.ts` | In-memory session state, MongoDB persistence hooks, feedback waiters. |
+| `lib/mongodb/client.ts` | MongoDB client — sessions and messages collections. |
 | `lib/agents/visionary.ts`, `critic.ts`, `judge.ts` | Prompts and LLM calls per role. |
 | `lib/agents/window.ts` | Transcript windowing for agent context. |
 | `lib/llm/index.ts` | Provider selection and caching. |

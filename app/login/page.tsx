@@ -133,7 +133,7 @@ function LoginPageContent() {
           <p className="text-[11px] leading-relaxed text-neutral-400">
             Authentication:{" "}
             <span className="text-neutral-200">Firebase</span>. Database:{" "}
-            <span className="text-neutral-200">Azure CosmosDB</span>.
+            <span className="text-neutral-200">MongoDB</span>.
           </p>
         </div>
       </div>

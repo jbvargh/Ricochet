@@ -1,5 +1,5 @@
 import { getSessionFromCookies } from "@/lib/auth/session-server";
-import { getSessionsByUser } from "@/lib/cosmos/client";
+import { getSessionsByUser } from "@/lib/mongodb/client";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";

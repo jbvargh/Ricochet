@@ -264,7 +264,7 @@ export default function SessionPage() {
     }
   }, [id, router]);
 
-  // Persist session snapshot to Cosmos (via API) for the dashboard
+  // Persist session snapshot (via API) for the dashboard
   useEffect(() => {
     if (!id || state.sessionState === "idle") return;
     const createdAt =

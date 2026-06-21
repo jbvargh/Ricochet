@@ -4,7 +4,7 @@ import type { Turn } from "@/lib/session/types";
 import {
   clearSessionAbort,
   getSession,
-  loadSessionFromCosmos,
+  loadPersistedSession,
   releaseOrchestratorLock,
   resolveDisplayReady,
   resolveFeedback,
@@ -35,7 +35,7 @@ export async function GET(
   let session = getSession(id);
   if (!session) {
     const user = await getSessionFromCookies();
-    session = await loadSessionFromCosmos(id, user?.uid) ?? undefined;
+    session = await loadPersistedSession(id, user?.uid) ?? undefined;
   }
   if (!session) {
     return new Response("Not found", { status: 404 });

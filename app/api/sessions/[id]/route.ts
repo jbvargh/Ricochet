@@ -1,5 +1,5 @@
 import { getSessionFromCookies } from "@/lib/auth/session-server";
-import { deleteSession, deleteMessagesBySession, upsertSession } from "@/lib/cosmos/client";
+import { deleteSession, deleteMessagesBySession, upsertSession } from "@/lib/mongodb/client";
 import type { DashboardSession } from "@/lib/dashboard/storage";
 import { NextResponse } from "next/server";
 
