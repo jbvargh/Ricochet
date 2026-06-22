@@ -1,6 +1,8 @@
 # Ricochet
 by Joshua Varghese, Daksh Patel, Vishal Senthilkumar and Aditya Mahesh
 
+https://ricochet1.vercel.app/
+
 **Ricochet** is a web app that turns a rough topic into stronger ideas through a **structured two-agent debate**. Instead of one chatbot that agrees with everything you say, Ricochet runs a live back-and-forth between specialized AI agents — then pauses at checkpoints so you can steer the next round.
 
 ## What it does
